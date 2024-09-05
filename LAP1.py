@@ -126,17 +126,19 @@ def solution_analytique_3(x,nb_points,Ta,p,h,T_ambient,k,A):
 
 '''retourne la liste des abscisses, de la solution analytique et de la solution numérique de l'exemple 1'''
 def list_graph_1(k,A,L,nb_points,Ta,Tb): 
+    nb_points=int(nb_points)
     deltaX=L/nb_points
     X=[0] + [(i+1/2)*deltaX for i in range(nb_points)]
     X.append(nb_points*deltaX)
-    Y_analytique=[solution_analytique_1(x,L,nb_points,Ta,Tb) for x in X]
     Y_numerique=solution_1(k,A,L,nb_points,Ta,Tb)
     Y_numerique=np.insert(Y_numerique, 0, Ta)
     Y_numerique=np.append(Y_numerique, Tb)
+    Y_analytique=[solution_analytique_1(x,L,nb_points,Ta,Tb) for x in X]
     return X,Y_numerique,Y_analytique
     
 '''retourne la liste des abscisses, de la solution analytique et de la solution numérique de l'exemple 2'''
 def list_graph_2(k,A,L,nb_points,Ta,Tb,q): 
+    nb_points=int(nb_points)
     deltaX=L/nb_points
     X=[0] + [(i+1/2)*deltaX for i in range(nb_points)]
     X.append(nb_points*deltaX)
@@ -148,6 +150,7 @@ def list_graph_2(k,A,L,nb_points,Ta,Tb,q):
     
 '''retourne la liste des abscisses, de la solution analytique et de la solution numérique de l'exemple 3'''
 def list_graph_3(k,A,L,nb_points,Ta,p,h,T_ambient): 
+    nb_points=int(nb_points)
     deltaX=L/nb_points
     X=[0] + [(i+1/2)*deltaX for i in range(nb_points)]
     Y_analytique=[solution_analytique_3(x,nb_points,Ta,p,h,T_ambient,k,A) for x in X]
@@ -229,21 +232,46 @@ def evolution_erreur_3(k,A,L,nb_points_max,Ta,p,h,T_ambient,norme):
     plt.ylim(0, max(erreurs)*1.1)
     plt.show()
 
+def ordre_cv_1(k,A,L,nb_points,Ta,Tb,r):
+    X,Y_numerique,Y_analytique=list_graph_1(k,A,L,nb_points,Ta,Tb)
+    erreur_h=erreur(Y_numerique,Y_analytique,1)
+    X,Y_numerique,Y_analytique=list_graph_1(k,A,L,nb_points/r,Ta,Tb)
+    erreur_rh=erreur(Y_numerique,Y_analytique,1)
+    return np.log(erreur_rh/erreur_h)/np.log(r)
+
+def ordre_cv_2(k,A,L,nb_points,Ta,Tb,q,r):
+    X,Y_numerique,Y_analytique=list_graph_2(k,A,L,nb_points,Ta,Tb,q)
+    erreur_h=erreur(Y_numerique,Y_analytique,1)
+    X,Y_numerique,Y_analytique=list_graph_2(k,A,L,nb_points/r,Ta,Tb,q)
+    erreur_rh=erreur(Y_numerique,Y_analytique,1)
+    return np.log(erreur_rh/erreur_h)/np.log(r)
+
+def ordre_cv_3(k,A,L,nb_points,Ta,p,h,T_ambient,r):
+    X,Y_numerique,Y_analytique=list_graph_3(k,A,L,nb_points,Ta,p,h,T_ambient)
+    erreur_h=erreur(Y_numerique,Y_analytique,1)
+    X,Y_numerique,Y_analytique=list_graph_3(k,A,L,nb_points/r,Ta,p,h,T_ambient)
+    erreur_rh=erreur(Y_numerique,Y_analytique,1)
+    return np.log(erreur_rh/erreur_h)/np.log(r)
+
 '''exemple 1'''
 k,A,L,nb_points,Ta,Tb = 1000,5*10*10**(-3),0.1,50,100,500
 nb_points_max=100
+r=2
 X,Y_numerique,Y_analytique=list_graph_1(k,A,L,nb_points,Ta,Tb)
 graph(X,Y_numerique,Y_analytique)
-evolution_erreur_1(k,A,L,nb_points_max,Ta,Tb,3)
+erreurs=evolution_erreur_1(k,A,L,nb_points_max,Ta,Tb,2)
+print(ordre_cv_1(k,A,L,nb_points,Ta,Tb,r))
 
 '''exemple 2'''
 k,A,L,nb_points,Ta,Tb,q = 0.5,1,0.004*5,50,100,200,1000*10**3
 X,Y_numerique,Y_analytique=list_graph_2(k,A,L,nb_points,Ta,Tb,q)
 graph(X,Y_numerique,Y_analytique)
-evolution_erreur_2(k,A,L,nb_points_max,Ta,Tb,q,3)
+evolution_erreur_2(k,A,L,nb_points_max,Ta,Tb,q,2)
+print(ordre_cv_2(k,A,L,nb_points,Ta,Tb,q,r))
 
 '''exemple 3'''
 k,A,L,nb_points,Ta,p,h,T_ambient = 1,1,0.2*5,50,100,1,25,20
 X,Y_numerique,Y_analytique=list_graph_3(k,A,L,nb_points,Ta,p,h,T_ambient)
 graph(X,Y_numerique,Y_analytique)
-evolution_erreur_3(k,A,L,nb_points_max,Ta,p,h,T_ambient,3)
+evolution_erreur_3(k,A,L,nb_points_max,Ta,p,h,T_ambient,2)
+print(ordre_cv_3(k,A,L,nb_points,Ta,p,h,T_ambient,r))
