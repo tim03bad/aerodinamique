@@ -16,30 +16,6 @@ def ErreurQuadratique(SolNum,SolAnalytique,pas):
     return norme_erreur
 
 def Calcul4_1(N,Ta,Tb,k,S,L):
-    """
-    
-
-    Parameters
-    ----------
-    N : Int
-        Nombre de noeuds.
-    Ta : Int/float
-        Température au bord au point A.
-    Tb : Int/float
-        Température au bord au point B.
-    k : Int/float
-        Conductivité thermique
-    S : Int/float
-        Surface transversale
-    L : Int/float
-        Longeur
-
-    Returns
-    -------
-    Tnum : np.Array
-        Vecteur solution contenant la température aux noeuds.
-
-    """
     
     ##Initialisation des matrices
     A = np.zeros((N,N)) #Matrice des coefficients
@@ -302,6 +278,7 @@ def Resolution4_2():
 def Resolution4_3():
     ##Solution Analytique
     def SolutionAnalytique4_3(x):
+        
         n = np.sqrt(n2)
         
         frac = np.cosh(n*(L-x))/np.cosh(n*L)
