@@ -4,17 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-#%% Paramètres
-L = 0.02    #Longeur de la barre
-N = 10      #Nombre de noeud
-k = 0.5     #Conductivité thermique
-S = 1       #Cross-section
-q = 1000e3  # Conductivité thermique
-
-#Conditions aux limites
-Ta = 100
-Tb = 200
-Tinf = 25   #Temperature air ambiant
 
 #%% Fonctions solutions analytiques
 def SolutionAnalytique4_1(x,L):        
@@ -22,23 +11,22 @@ def SolutionAnalytique4_1(x,L):
 
 np.vectorize(SolutionAnalytique4_1)
 
-def SolutionAnalytique4_2(x,L,Ta,Tb,k,q):
+def SolutionAnalytique4_2(x,L,k,q,Ta,Tb):
         a = (Tb-Ta)/L + q*(L-x)/(2*k)
         return a*x+Ta
 
 np.vectorize(SolutionAnalytique4_2)
 
-def SolutionAnalytique4_3(x,L,Tb,n2,Tinf):
+def SolutionAnalytique4_3(x : np.ndarray,L,n2,Tb,Tinf):
         n = np.sqrt(n2)
         
         frac = np.cosh(n*(L-x))/np.cosh(n*L)
         
         return frac*(Tb-Tinf) + Tinf
 
-np.vectorize(SolutionAnalytique4_3)
 
 #%% Calculs
-def Calcul4_1(N,Ta,Tb,k,S,L):
+def Calcul4_1(N,L,k,S,Ta,Tb):
     
     ##Initialisation des matrices
     A = np.zeros((N,N)) #Matrice des coefficients
@@ -77,7 +65,7 @@ def Calcul4_1(N,Ta,Tb,k,S,L):
     
     return X,Tnum
 
-def Calcul4_2(N,Ta,Tb,q,k,S,L):
+def Calcul4_2(N,L,k,q,S,Ta,Tb):
     
     ##Initialisation des matrices
     A = np.zeros((N,N)) #Matrice des coefficients
@@ -119,7 +107,7 @@ def Calcul4_2(N,Ta,Tb,q,k,S,L):
     
     return X,Tnum
 
-def Calcul4_3(N,Tb,Tinf,L,n2):
+def Calcul4_3(N,L,n2,Tb,Tinf):
 
     ##Initialisation des matrices
     A = np.zeros((N,N)) #Matrice des coefficients
@@ -156,7 +144,7 @@ def Calcul4_3(N,Tb,Tinf,L,n2):
         pass
 
     ##Resolution 
-    X,Tnum = np.linalg.solve(A, b)
+    Tnum = np.linalg.solve(A, b)
     
     return X,Tnum
 
@@ -174,29 +162,100 @@ def OrdeConvergence4_1(Ta,Tb,k,S,L):
     E = []
     
     for n in listOfN:
-        X,T = Calcul4_1(n,Ta,Tb,k,S,L)
-        E.append(ErreurQuadratique(T,SolutionAnalytique4_1(X),L/n))
+        X,T = Calcul4_1(n,L,k,S,Ta,Tb)
+        E.append(ErreurQuadratique(T,SolutionAnalytique4_1(X,L),L/n))
     
-    return np.array(E), np.log(E[0]/E[1])/np.log((L/listOfN[0])/(L/listOfN[1]))
+    return np.array(listOfN), np.array(E), np.log(E[0]/E[1])/np.log((L/listOfN[0])/(L/listOfN[1]))
 
 def OrdeConvergence4_2(Ta,Tb,q,k,S,L):
     listOfN = [2,3,4,6,8,10,15,20,30,50,100]
     E = []
     
     for n in listOfN:
-        X,T = Calcul4_2(n,Ta,Tb,q,k,S,L)
-        E.append(ErreurQuadratique(T,SolutionAnalytique4_2(X),L/n))
+        X,T = Calcul4_2(n,L,k,q,S,Ta,Tb)
+        E.append(ErreurQuadratique(T,SolutionAnalytique4_2(X,L,k,q,Ta,Tb),L/n))
     
-    return  np.array(E), np.log(E[0]/E[1])/np.log((L/listOfN[0])/(L/listOfN[1]))
+    return  np.array(listOfN) ,np.array(E), np.log(E[0]/E[1])/np.log((L/listOfN[0])/(L/listOfN[1]))
 
 def OrdeConvergence4_3(Tb,Tinf,L,n2):
     listOfN = [2,3,4,6,8,10,15,20,30,50,100]
     E = []
     
     for n in listOfN:
-        X,T = Calcul4_3(n,Tb,Tinf,L,n2)
-        E.append(ErreurQuadratique(T,SolutionAnalytique4_3(X),L/n))
+        X,T = Calcul4_3(n,L,n2,Tb,Tinf)
+        E.append(ErreurQuadratique(T,SolutionAnalytique4_3(X,L,n2,Tb,Tinf),L/n))
     
-    return np.array(E), np.log(E[0]/E[1])/np.log((L/listOfN[0])/(L/listOfN[1]))
+    return np.array(listOfN),np.array(E), np.log(E[-2]/E[-1])/np.log((L/listOfN[-2])/(L/listOfN[-1]))
 
 #%% Graphiques
+def Graphique(Xnum,Xanalytique,SolNum,SolAnalytique,listOfN,E):
+
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(6,8))
+
+    ax1.plot(Xnum,SolNum,'rx', label = 'Solution numérique')
+    ax1.plot(Xanalytique,SolAnalytique, label = 'Solution analytique',)
+    ax1.set(xlabel = 'Position', ylabel = 'Temperature', title = 'Solution numérique et analytique')
+    ax1.legend()
+    ax1.grid()
+    
+    ax2.plot(np.log(1/listOfN),np.log(E), label = r'$\ln(E) = f(\ln(1/Nx))$')
+    ax2.set(xlabel = 'log(1/N)', ylabel = 'log(E)', title = r'Courbe $\ln(E) = f(\ln(1/Nx))$')
+    ax2.legend()
+    ax2.grid()
+
+    plt.tight_layout()
+    plt.show()
+
+
+#%% Exercice 4.1
+L = 0.5 #Longeur de la barre
+N = 5  #Nombre de noeud
+k = 1000  #Conductivité thermique
+S = 10e-3 #Cross-section
+Ta = 100
+Tb = 500
+
+Xnum,Tnum = Calcul4_1(N,L,k,S,Ta,Tb)
+Xanalytique = np.linspace(0,L,num=50)
+SolAnalytique = SolutionAnalytique4_1(Xanalytique,L)
+listOfN, E, p = OrdeConvergence4_1(Ta,Tb,k,S,L)
+Graphique(Xnum,Xanalytique,Tnum,SolAnalytique,listOfN,E)
+
+print("Exercice 4.1 -> Ordre de convergence: {}".format(p))
+
+#%% Exercice 4.2
+L = 0.02 #Longeur de la barre
+N = 10  #Nombre de noeud
+k = 0.5  #Conductivité thermique
+S = 1 #Cross-section
+q = 1000e3
+Ta = 100
+Tb = 200
+
+Xnum,Tnum = Calcul4_2(N,L,k,q,S,Ta,Tb)
+print(Xnum)
+Xanalytique = np.linspace(0,L,num=50)
+SolAnalytique = SolutionAnalytique4_2(Xanalytique,L,k,q,Ta,Tb)
+listOfN, E, p = OrdeConvergence4_2(L,k,q,S,Ta,Tb)
+Graphique(Xnum,Xanalytique,Tnum,SolAnalytique,listOfN,E)
+
+print("Exercice 4.2 -> Ordre de convergence: {}".format(p))
+
+
+#%% Exercice 4.3
+L = 1
+N = 50
+n2 = 25    
+Tb = 100
+Tinf = 20
+
+Xnum,Tnum = Calcul4_3(N,L,n2,Tb,Tinf)
+Xanalytique = np.linspace(0,L,num=50)
+SolAnalytique = SolutionAnalytique4_3(Xanalytique,L,n2,Tb,Tinf)
+listOfN, E, p = OrdeConvergence4_3(Tb,Tinf,L,n2)
+Graphique(Xnum,Xanalytique,Tnum,SolAnalytique,listOfN,E)
+
+print("Exercice 4.3 -> Ordre de convergence: {}".format(p))
+
+
+# %%
