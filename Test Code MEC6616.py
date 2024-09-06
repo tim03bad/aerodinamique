@@ -4,7 +4,7 @@ Created on Mon Aug 26 21:22:28 2024
 
 @author: GU603ZW
 """
-
+#%%
 import numpy as np
 import matplotlib.pyplot as plt
 
