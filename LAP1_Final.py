@@ -41,7 +41,6 @@ def Calcul4_1(N,L,k,S,Ta,Tb):
 
 
     ## Conditions aux limites
-
     b[0] = (2*k*S/delta_x)*Ta #Condition aux limites en A
     b[-1] = ((2*k*S)/delta_x)*Tb #Condition aux limites en B
 
@@ -84,8 +83,8 @@ def Calcul4_2(N,L,k,q,S,Ta,Tb):
     S_u = q*S*delta_x  #Terme source uniforme
     
     ## Conditions aux limites et Sources
-    b = b*S_u
-    b[0] = b[0] + (2*k*S/delta_x)*Ta #Condition aux limites en A
+    b = b*S_u                            #Ajout du terme source uniforme
+    b[0] = b[0] + (2*k*S/delta_x)*Ta     #Condition aux limites en A
     b[-1] = b[-1] + ((2*k*S)/delta_x)*Tb #Condition aux limites en B
 
     #Construction de la matrice A
@@ -126,7 +125,7 @@ def Calcul4_3(N,L,n2,Tb,Tinf):
     S_u = n2*delta_x*Tinf  #Terme source uniforme
     
     ## Conditions aux limites et Sources
-    b = b*S_u
+    b = b*S_u              #Ajout terme source uniforme au second membre
     b[0] += (2/delta_x)*Tb #Condition aux limites en A
 
     #Construction de la matrice A
@@ -163,7 +162,8 @@ def ErreurQuadratique(SolNum,SolAnalytique,pas):
 def OrdeConvergence4_1(Ta,Tb,k,S,L):
     listOfN = [2,3,4,6,8,10,15,20,30, 50,100]
     E = []
-    
+
+    #Calcul de l'erreur quadratique pour une série de maillage de taille différente
     for n in listOfN:
         X,T = Calcul4_1(n,L,k,S,Ta,Tb)
         E.append(ErreurQuadratique(T,SolutionAnalytique4_1(X,L),L/n))
@@ -174,6 +174,7 @@ def OrdeConvergence4_2(Ta,Tb,q,k,S,L):
     listOfN = [2,3,4,6,8,10,15,20,30,50,100]
     E = []
     
+    #Calcul de l'erreur quadratique pour une série de maillage de taille différente   
     for n in listOfN:
         X,T = Calcul4_2(n,L,k,q,S,Ta,Tb)
         E.append(ErreurQuadratique(T,SolutionAnalytique4_2(X,L,k,q,Ta,Tb),L/n))
@@ -183,7 +184,8 @@ def OrdeConvergence4_2(Ta,Tb,q,k,S,L):
 def OrdeConvergence4_3(Tb,Tinf,L,n2):
     listOfN = [2,3,4,6,8,10,15,20,30,50,100]
     E = []
-    
+
+    #Calcul de l'erreur quadratique pour une série de maillage de taille différente
     for n in listOfN:
         X,T = Calcul4_3(n,L,n2,Tb,Tinf)
         E.append(ErreurQuadratique(T,SolutionAnalytique4_3(X,L,n2,Tb,Tinf),L/n))
@@ -195,12 +197,14 @@ def Graphique(Xnum,Xanalytique,SolNum,SolAnalytique,listOfN,E):
 
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(6,8))
 
+    #Graphique Solution numérique et analytique
     ax1.plot(Xnum,SolNum,'rx', label = 'Solution numérique')
     ax1.plot(Xanalytique,SolAnalytique, label = 'Solution analytique',)
     ax1.set(xlabel = 'Position', ylabel = 'Temperature', title = 'Solution numérique et analytique')
     ax1.legend()
     ax1.grid()
-    
+
+    #Graphique Convergence
     ax2.plot(np.log(1/listOfN),np.log(E), label = r'$\ln(E) = f(\ln(1/Nx))$')
     ax2.set(xlabel = 'log(1/N)', ylabel = 'log(E)', title = r'Courbe $\ln(E) = f(\ln(1/Nx))$')
     ax2.legend()
@@ -215,8 +219,8 @@ L = 0.5 #Longeur de la barre
 N = 5  #Nombre de noeud
 k = 1000  #Conductivité thermique
 S = 10e-3 #Cross-section
-Ta = 100
-Tb = 500
+Ta = 100  #Température au bord A
+Tb = 500  # Température au bord B
 
 Xnum,Tnum = Calcul4_1(N,L,k,S,Ta,Tb)
 Xanalytique = np.linspace(0,L,num=50)
@@ -227,16 +231,15 @@ Graphique(Xnum,Xanalytique,Tnum,SolAnalytique,listOfN,E)
 print("Exercice 4.1 -> Ordre de convergence: {}".format(p))
 
 #%% Exercice 4.2
-L = 0.02 #Longeur de la barre
+L = 0.02 #Longueur de la barre
 N = 10  #Nombre de noeud
 k = 0.5  #Conductivité thermique
 S = 1 #Cross-section
-q = 1000e3
-Ta = 100
-Tb = 200
+q = 1000e3  #Source de chaleur
+Ta = 100   #Temparature au bord A
+Tb = 200   #Temperature au bord B
 
 Xnum,Tnum = Calcul4_2(N,L,k,q,S,Ta,Tb)
-print(Xnum)
 Xanalytique = np.linspace(0,L,num=50)
 SolAnalytique = SolutionAnalytique4_2(Xanalytique,L,k,q,Ta,Tb)
 listOfN, E, p = OrdeConvergence4_2(L,k,q,S,Ta,Tb)
@@ -246,11 +249,11 @@ print("Exercice 4.2 -> Ordre de convergence: {}".format(p))
 
 
 #%% Exercice 4.3
-L = 1
-N = 50
-n2 = 25    
-Tb = 100
-Tinf = 20
+L = 1        #Longueur de la l'ailette
+N = 50        #Nombre de noeud
+n2 = 25       #Coefficient réduit
+Tb = 100      #Température au bord B (thermostat)
+Tinf = 20     #Température de l'air ambiant à l'infini
 
 Xnum,Tnum = Calcul4_3(N,L,n2,Tb,Tinf)
 Xanalytique = np.linspace(0,L,num=50)
