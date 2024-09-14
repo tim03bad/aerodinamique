@@ -1,3 +1,10 @@
+''' 
+############   LAP 2    ###############
+Emilien VIGIER
+Timothé BADICHE
+#############           ###############
+'''
+
 #%% Importations
 import numpy as np
 import matplotlib.pyplot as plt
