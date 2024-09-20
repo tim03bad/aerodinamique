@@ -15,6 +15,28 @@ from CL import CL
 class MeanSquare:
     def __init__(self):
         
+        """
+        Constructeur de l'objet MeanSquare
+
+        Parameters
+        ----------
+        None
+
+        Attributes
+        ----------
+        mesh_obj : Mesh
+            Objet contenant les informations du maillage
+        elements : list
+            Liste des objets Element
+        champ : Champ
+            Objet contenant le champ
+        CL : CL
+            Objet contenant les conditions aux limites
+
+        Returns
+        -------
+        None
+        """
         mesher = MeshGenerator()
         mesh_parameters = {'mesh_type': 'TRI','lc': 0.5}
 
@@ -24,22 +46,44 @@ class MeanSquare:
         conec.compute_connectivity()
 
 
-    def setChamp(self, champ : function, grad : function):
-        self.champ = Champ(champ, grad)
+
 
     def createElements(self):
         
         #Construction des elements
+        """
+        Construction des elements du maillage et initialisation du champ
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
         self.elements = [Element(self.mesh_obj, i) for i in range(self.mesh_obj.get_number_of_elements())] 
 
         #Initialisation du champ dans les elements
-        self.champ.set_ElementValue(self.elements)
+        self.champ.set_ElementsValue(self.elements)
 
     def createCL(self,parameters : dict[int,(str,float)]):
         self.CL = CL(parameters)
 
     def constructionATA(self):
 
+        """
+        Construction de la matrice ATA
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+        
         for i in range(self.mesh_obj.get_number_of_faces()):
 
             elem = self.mesh_obj.get_face_to_elements(i)
@@ -69,6 +113,18 @@ class MeanSquare:
 
     def constructionB(self):
 
+        """
+        Construction du second membre B
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+        
         for i in range(self.mesh_obj.get_number_of_faces()):
 
             elem = self.mesh_obj.get_face_to_elements(i)
@@ -91,10 +147,25 @@ class MeanSquare:
                 Eg.B_add(self.CL.calculCL_B(self.mesh_obj.get_face_tag(i),i,Eg))
     
     def calculMeanSquare(self):
+        """
+        Calcul du gradient de chaque élément par résolution du système
+        linéaire ATA X = B
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
         for E in self.elements:
             E.calculGRAD()
 
 
     def getElement(self,index : int):
         return self.elements[index]
+
+    def setChamp(self, champ : function, grad : function):
+        self.champ = Champ(champ, grad)
     

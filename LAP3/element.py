@@ -20,9 +20,27 @@ class Element():
         index : int
             Index de l'élément dans le maillage
 
-        """
+        Attributes
+        ----------
+        index : int
+            Index de l'élément dans le maillage
+        value : float
+            Valeur du champ au centre de l'élément
+        grad : ndarray
+            Gradient du champ au centre de l'élément
+        ATA : ndarray
+            Matrice ATA de l'élément
+        B : ndarray
+            Matrice B de l'élément
+        nodes : list
+            Liste des noeuds de l'élément
+        nodesCoord : dict
+            Dictionnaire Node : Coordonnées
+        ElementCoord : ndarray
+            Coordonnées du centre de l'élément
 
-        print("Triange n°",index)
+        """
+        
         self.index = index
 
         #Grandeurs du champs dans l'élément
@@ -46,21 +64,86 @@ class Element():
 
 ############ CALCULS ################
     def ATA_add(self,Ald : np.ndarray):
+        """
+        Ajoute une matrice Ald à la matrice ATA de l'élément
+
+        Parameters
+        ----------
+        Ald : ndarray
+            Matrice à ajouter à la matrice ATA
+
+        Returns
+        -------
+        None
+
+        """
         self.ATA += Ald
 
-    def B_add(self,index : int, value : float):
-        self.B[index] += value
+    def B_add(self,index : int, Bld : np.ndarray):
+
+        """
+        Ajoute une matrice Bld à la matrice B de l'élément
+
+        Parameters
+        ----------
+        index : int
+            Index de la composante de la matrice B
+        Bld : ndarray
+            Matrice à ajouter à la matrice B
+
+        Returns
+        -------
+        None
+
+        """
+        
+        self.B[index] += Bld
 
 
     def calculGRAD(self):
+        """
+        Calcul du gradient de l'élément par produit matriciel, résolution
+
+        Returns
+        -------
+        None
+
+        """
+        
         self.grad = np.linalg.inv(self.ATA)@self.B
 
     def calculFaceCenter(self, face : int):
+        """
+        Calcul du centre d'une face de l'élément
+
+        Parameters
+        ----------
+        face : int
+            Numéro de la face
+
+        Returns
+        -------
+        ndarray
+            Coordonnées du centre de la face
+        """
         Nodes = self.mesh_obj.get_face_to_nodes(face)
 
         return self.nodesCoord[Nodes[0]] + (self.nodesCoord[Nodes[1]] - self.NodesCoord[Nodes[0]])/2  
 
     def calculFaceNormal(self, face : int):
+        """
+        Calcul de la normale d'une face de l'élément
+
+        Parameters
+        ----------
+        face : int
+            Numéro de la face
+
+        Returns
+        -------
+        ndarray
+            Composantes de la normale à la face
+        """
         Nodes = self.mesh_obj.get_face_to_nodes(face)
 
         Direction = self.nodesCoord[Nodes[1]] - self.nodesCoord[Nodes[0]]

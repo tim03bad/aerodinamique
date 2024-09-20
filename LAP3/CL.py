@@ -60,6 +60,23 @@ class CL:
         
     def calculCL_B(self,tag : int,face : int,Eg : Element)->np.ndarray:
         
+        """
+        Calcul de la contribution de la condition au bord pour une face dans le second membre.
+
+        Parameters
+        ----------
+        tag : int
+            Tag de la face externe.
+        face : int
+            Numéro de la face.
+        Eg : Element
+            Élément concerné.
+
+        Returns
+        -------
+        Bld : ndarray
+            Contribution de la condition au bord dans le second membre.
+        """
         if self.CLConfig[tag][0] == "D": #Dirichlet
             return self.__private_Dirichlet_B(tag,face,Eg)
 
