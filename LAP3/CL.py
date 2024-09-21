@@ -93,7 +93,7 @@ class CL:
         DX = FaceCenter[0] - EgCenter[0]
         DY = FaceCenter[1] - EgCenter[1]
 
-        Al = np.array((2,2))
+        Al = np.zeros((2,2))
         Al[0,0] = DX**2
         Al[1,0] = DX*DY
         Al[0,1] = DY*DX
@@ -112,7 +112,7 @@ class CL:
         DXn = (DX*Normal[0]+DY*Normal[1])*Normal[0]
         DYn = (DX*Normal[0]+DY*Normal[1])*Normal[1]
 
-        Al = np.array((2,2))
+        Al = np.zeros((2,2))
         Al[0,0] = DXn**2
         Al[1,0] = DXn*DYn
         Al[0,1] = DYn*DXn
@@ -127,9 +127,9 @@ class CL:
         DX = FaceCenter[0] - EgCenter[0]
         DY = FaceCenter[1] - EgCenter[1]
 
-        B = np.array(2)
-        B[0,0] = DX*(self.CLConfig[tag][1]-Eg.get_value())
-        B[1,0] = DY*(self.CLConfig[tag][1]-Eg.get_value())
+        B = np.zeros(2)
+        B[0] = DX*(self.CLConfig[tag][1]-Eg.get_value())
+        B[1] = DY*(self.CLConfig[tag][1]-Eg.get_value())
 
         return B
     
@@ -144,9 +144,9 @@ class CL:
         DXn = (DX*Normal[0]+DY*Normal[1])*Normal[0]
         DYn = (DX*Normal[0]+DY*Normal[1])*Normal[1]
 
-        B = np.array(2)
-        B[0,0] = DXn*(DX*Normal[0]+DY*Normal[1])*self.CLConfig[tag][1]
-        B[1,0] = DYn*(DX*Normal[0]+DY*Normal[1])*self.CLConfig[tag][1]
+        B = np.zeros(2)
+        B[0] = DXn*(DX*Normal[0]+DY*Normal[1])*self.CLConfig[tag][1]
+        B[1] = DYn*(DX*Normal[0]+DY*Normal[1])*self.CLConfig[tag][1]
 
         return B
 

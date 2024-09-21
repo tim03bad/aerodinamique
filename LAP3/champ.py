@@ -5,7 +5,7 @@ from element import Element
 
 class Champ:
 
-    def __init__(self, champ : function, grad : function):
+    def __init__(self, champ, grad):
         """
         Constructeur de l'objet Champ
 
@@ -42,15 +42,41 @@ class Champ:
             element.set_value(self.get_value(coord[0],coord[1]))
 
 
-    def set_function(self, champ : function):
+    def set_function(self, champ):
+        """
+        Fixe la fonction qui calcule la valeur du champ au point (x,y)
+
+        Parameters
+        ----------
+        champ : function
+            Fonction qui prend en argument deux valeurs (x,y) et qui renvoie la valeur du champ au point (x,y)
+
+        Returns
+        -------
+        None
+        """
+        
         self.function = champ
 
-    def set_grad(self, grad : function):
+    def set_grad(self, grad):
+        """
+        Fixe la fonction qui calcule le gradient du champ au point (x,y)
+
+        Parameters
+        ----------
+        grad : function
+            Fonction qui prend en argument deux valeurs (x,y) et qui renvoie le gradient du champ au point (x,y)
+
+        Returns
+        -------
+        None
+        """
+        
         self.grad = grad
         
 
     def get_value(self, x : float, y : float):
-        return self.function(x,y)
+        return self.champ(x,y)
     
     def get_grad(self, x : float, y : float):
         return self.grad(x,y)

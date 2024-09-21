@@ -40,7 +40,7 @@ class Element():
             Coordonnées du centre de l'élément
 
         """
-        
+
         self.index = index
 
         #Grandeurs du champs dans l'élément
@@ -79,15 +79,13 @@ class Element():
         """
         self.ATA += Ald
 
-    def B_add(self,index : int, Bld : np.ndarray):
+    def B_add(self,Bld : np.ndarray):
 
         """
         Ajoute une matrice Bld à la matrice B de l'élément
 
         Parameters
         ----------
-        index : int
-            Index de la composante de la matrice B
         Bld : ndarray
             Matrice à ajouter à la matrice B
 
@@ -97,7 +95,7 @@ class Element():
 
         """
         
-        self.B[index] += Bld
+        self.B += Bld
 
 
     def calculGRAD(self):

@@ -13,7 +13,7 @@ from meshPlotter import MeshPlotter
         
 mesher = MeshGenerator()
 plotter = MeshPlotter()
-mesh_parameters = {'mesh_type': 'TRI','lc': 0.5}
+mesh_parameters = {'mesh_type': 'TRI','lc': 0.1}
 mesh_obj = mesher.rectangle([0.0, 1.0, 0.0, 1.0], mesh_parameters)
 
 conec = MeshConnectivity(mesh_obj)
