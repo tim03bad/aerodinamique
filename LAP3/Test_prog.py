@@ -13,11 +13,13 @@ def grad(x,y):
 #%%
 param = {0: ('D', fct),1:('D',fct),2:('D',fct),3:('D',fct)}
 
-E1 =0
-E2 =0
+#Erreur
+E1 = 0
+E2 = 0
 
-h1 =0
-h2 =0
+#Aire moyenne
+h1 = 0
+h2 = 0
 
 
 #%% Mesh 1
