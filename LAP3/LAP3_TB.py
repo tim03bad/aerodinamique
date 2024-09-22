@@ -15,9 +15,7 @@ from meshConnectivity import MeshConnectivity
 mesher = MeshGenerator()
 
 print('Rectangle : maillage non structuré avec des triangles')
-mesh_parameters = {'mesh_type': 'TRI',
-                   'lc': 0.5
-                   }
+mesh_parameters = {'mesh_type': 'TRI','lc': 0.05}
 mesh_obj = mesher.rectangle([0.0, 1.0, 0.0, 1.0], mesh_parameters)
 conec = MeshConnectivity(mesh_obj)
 conec.compute_connectivity()
@@ -113,9 +111,18 @@ def ALS(mesh_obj,i_element,voisins):
     return ALS
     
 #%% Création de la matrice ALS avec frontière
-def ALS_front(mesh_obj,i_element,i_face,newmann=False):
+def ALS_front(mesh_obj,i_element,i_face,voisins,newmann=False):
     (xa,ya) = get_center_face(mesh_obj, i_face)
     (xtg,ytg) = get_center_element(mesh_obj, i_element)
+    (x1, y1) = get_center_element(mesh_obj, voisins[0])
+    (x2, y2) = get_center_element(mesh_obj, voisins[1])
+    ALS_front = np.zeros((2,2))
+    ALS_front[0][0] = (x1-xtg)**2
+    ALS_front[0][1] = (x1-xtg)*(x2-xtg)
+    ALS_front[1][0] = (x1-xtg)*(x2-xtg)
+    ALS_front[1][1] = (x2-xtg)**2
+    
+    
     deltaX = xa-xtg
     deltaY = ya-ytg
     (nx, ny) = normal(mesh_obj, i_element, i_face)
@@ -125,10 +132,10 @@ def ALS_front(mesh_obj,i_element,i_face,newmann=False):
         deltaY = (deltaX*nx+deltaY*ny)*ny
     
     ALS_front = np.zeros((2,2))
-    ALS_front[0][0] = deltaX**2
-    ALS_front[0][1] = deltaX*deltaY
-    ALS_front[1][0] = deltaX*deltaY
-    ALS_front[1][1] = deltaY**2
+    ALS_front[0][0] += deltaX**2
+    ALS_front[0][1] += deltaX*deltaY
+    ALS_front[1][0] += deltaX*deltaY
+    ALS_front[1][1] += deltaY**2
     return ALS_front
 
 #%% Création de la matrice B=AT*Phi
@@ -149,11 +156,19 @@ def B_inter(mesh_obj,i_element,voisins):
     return B
     
 #%% Création de la matrice B=AT*Phi à la frontière
-def B_inter_front(mesh_obj, i_element, i_face, newmann=False):
+def B_inter_front(mesh_obj, i_element, i_face,voisins,newmann=False):
     (xtg,ytg) = get_center_element(mesh_obj, i_element)
     (xa,ya) = get_center_face(mesh_obj, i_face)
+    (x1, y1) = get_center_element(mesh_obj, voisins[0])
+    (x2, y2) = get_center_element(mesh_obj, voisins[1])
+    
     phitg = phi(xtg,ytg)
+    phi1 = phi(x1,y1)
+    phi2 = phi(x2,y2)
     B = np.zeros(2)
+    
+    B[0] = (x1-xtg)*(phi1-phitg) + (x2-xtg)*(phi2-phitg)
+    B[1] = (y1-ytg)*(phi1-phitg) + (y2-ytg)*(phi2-phitg)
     
     if newmann:
         nodes = mesh_obj.get_face_to_nodes(i_face)
@@ -168,14 +183,14 @@ def B_inter_front(mesh_obj, i_element, i_face, newmann=False):
         yan = n[1]*projection
         phian = phi(xan,yan)
         
-        B[0] = (xan-xtg)*(phian-phitg)
-        B[1] = (yan-ytg)*(phian-phitg)
+        B[0] += (xan-xtg)*(phian-phitg)
+        B[1] += (yan-ytg)*(phian-phitg)
         return B
     
     phia = phi(xa,ya)
 
-    B[0] = (xa-xtg)*(phia-phitg)
-    B[1] = (ya-ytg)*(phia-phitg)
+    B[0] += (xa-xtg)*(phia-phitg)
+    B[1] += (ya-ytg)*(phia-phitg)
     return B
     
 #%% matrice de matrice inversée ATAI
@@ -187,7 +202,8 @@ def ATAI(mesh_obj):
         if -1 in voisins:
             index = voisins.index(-1)
             frontiere = num_face[index]
-            ATA[i] = np.linalg.inv(ALS_front(mesh_obj,i,frontiere))
+            voisins.remove(-1)
+            ATA[i] = np.linalg.inv(ALS_front(mesh_obj,i,frontiere, voisins))
         else :
             ATA[i] = np.linalg.inv(ALS(mesh_obj,i,voisins))
     return ATA
@@ -201,7 +217,8 @@ def B_tot(mesh_obj):
         if -1 in voisins:
             index = voisins.index(-1)
             frontiere = num_face[index]
-            B[i] = B_inter_front(mesh_obj, i, frontiere)
+            voisins.remove(-1)
+            B[i] = B_inter_front(mesh_obj, i, frontiere, voisins)
         else :
             B[i] = B_inter(mesh_obj,i,voisins)
     return B
