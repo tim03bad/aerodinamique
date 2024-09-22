@@ -1,6 +1,5 @@
 import numpy as np
 
-
 from mesh import Mesh
 from meshGenerator import MeshGenerator
 from meshConnectivity import MeshConnectivity
@@ -69,7 +68,7 @@ class MeanSquare:
         #Initialisation du champ dans les elements
         self.champ.set_ElementsValue(self.elements)
 
-    def createCL(self,parameters : dict[int,(str,float)]):
+    def createCL(self,parameters : dict[int,(str,any)]):
         self.CL = CL(parameters)
 
     def constructionATA(self):
@@ -211,31 +210,16 @@ class MeanSquare:
             print("E{} : {} | {}".format(i,gradAnal[i],gradNum[i]))
 
     def error(self):
-        """
-        Calcul de l'erreur entre le gradient numérique et le gradient analytique.
+        
+        NormsN = np.array([E.getGradNorm() for E in self.elements])
+        NormsA = np.array([np.linalg.norm(self.champ.grad(E.get_Coord()[0], E.get_Coord()[1])) for E in self.elements])
 
-        Returns
-        -------
-        erreur : float
-            Erreur (norme L2) entre le gradient numérique et le gradient analytique.
-        """
-        gradAnal = []
-        gradNum = []
+        #print(NormsA)
+        #print(NormsN)
 
-        #Récupération du gradient numérique et calcul du gradient analytique pour chaque élément
-        for E in self.elements:
-            gradNum.append(E.get_grad())
-            Coordinate = E.get_Coord()
-            gradAnal.append(self.champ.grad(Coordinate[0], Coordinate[1]))
 
-        gradAnal = np.array(gradAnal)
-        gradNum = np.array(gradNum)
 
-        #Calcul de l'erreur (norme L2)
-        Dgrad = gradNum - gradAnal
-        S = np.sum((Dgrad[:,0]**2+Dgrad[:,1]**2))
-
-        return np.sqrt(S/len(self.elements))
+        return np.sqrt(np.sum((NormsA-NormsN)**2)/len(self.elements))
 
         
     

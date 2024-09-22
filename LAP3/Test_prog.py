@@ -33,7 +33,7 @@ ms1.constructionB()
 ms1.calculMeanSquare()
 E1 = ms1.error()
 h1 = ms1.calculTailleMoyenne()
-print("Error : ",ms1.error())
+print("Error : ",E1)
 
 # %% Mesh 2
 mesh_parameters2 = {'mesh_type': 'TRI','lc': 0.01}
@@ -46,7 +46,8 @@ ms2.constructionB()
 ms2.calculMeanSquare()
 E2 = ms2.error()
 h2 = ms2.calculTailleMoyenne()
-print("Error : ",ms2.error())
+print("Error : ",E2)
 
 #%% Ordre de convergence
 print("Ordre de convergence : ", np.log(E2/E1)/np.log(h2/h1))
+# %%

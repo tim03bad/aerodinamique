@@ -67,7 +67,6 @@ class Element():
 
         #Calcul de l'aire de l'élément
         self.area = self.__private_Area()
-        print(self.area)
 
         ####Debug#####
         self.Blist = []
@@ -166,13 +165,13 @@ class Element():
     def __private_Area(self):
         n = len(self.nodes)
         vertices = np.array([self.nodesCoord[node] for node in self.nodes])
-        
         vertices = np.vstack([vertices, self.nodesCoord[self.nodes[0]]])
-        print(vertices)
+
         #Calcul de l'aire de l'élément avec la formule du shoelace
         return 0.5 * np.abs(np.sum(vertices[:-1,0]* vertices[1:,1] - vertices[1:,0]*vertices[:-1,1]))
 
-
+    def getGradNorm(self):
+        return np.linalg.norm(self.grad)
     
 ########### GETTERS ################
     def get_Coord(self):
