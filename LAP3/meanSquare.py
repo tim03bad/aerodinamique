@@ -1,10 +1,7 @@
 import numpy as np
-from seaborn import plotting_context
-from xarray import Coordinate
 
 
 from mesh import Mesh
-import mesh
 from meshGenerator import MeshGenerator
 from meshConnectivity import MeshConnectivity
 from meshPlotter import MeshPlotter
@@ -15,7 +12,7 @@ from champ import Champ
 from CL import CL
 
 class MeanSquare:
-    def __init__(self):
+    def __init__(self,mesh_parameters):
         
         """
         Constructeur de l'objet MeanSquare
@@ -39,19 +36,19 @@ class MeanSquare:
         -------
         None
         """
-        mesher = MeshGenerator()
-        plotter = MeshPlotter()
-        mesh_parameters = {'mesh_type': 'TRI','lc': 0.1}
+        mesher = MeshGenerator(verbose=False)
+
 
         self.mesh_obj = mesher.rectangle([0.0, 1.0, 0.0, 1.0], mesh_parameters)
 
-        conec = MeshConnectivity(self.mesh_obj)
+        conec = MeshConnectivity(self.mesh_obj,verbose=False)
         conec.compute_connectivity()
 
+
+
+    def plot(self):
+        plotter = MeshPlotter()
         plotter.plot_mesh(self.mesh_obj, label_points=True, label_elements=True, label_faces=True)
-
-
-
 
     def createElements(self):
         
@@ -113,9 +110,14 @@ class MeanSquare:
                 Eg.ATA_add(Ald)
                 Ed.ATA_add(Ald)
 
+                #Eg.storeA(Ald,(Eg.index,Ed.index))
+                #Ed.storeA(Ald,(Ed.index,Eg.index))
+
             else: #face externe (prise en compte condition au limite)
                 #La classe CL, gère automatiquement les conditions au bord
                 Eg.ATA_add(self.CL.calculCL_ATA(self.mesh_obj.get_boundary_face_to_tag(i),i,Eg))
+
+                #Eg.storeA(self.CL.calculCL_ATA(self.mesh_obj.get_boundary_face_to_tag(i),i,Eg),(Eg.index,-1))
 
 
     def constructionB(self):
@@ -150,9 +152,15 @@ class MeanSquare:
 
                 Eg.B_add(Bld)
                 Ed.B_add(Bld)
+
+
+                #Eg.storeB(Bld)
+                #Ed.storeB(Bld)
             
             else: #face externe (prise en compte condition au limite)
                 Eg.B_add(self.CL.calculCL_B(self.mesh_obj.get_boundary_face_to_tag(i),i,Eg))
+
+                #Eg.storeB(self.CL.calculCL_B(self.mesh_obj.get_boundary_face_to_tag(i),i,Eg))
     
     def calculMeanSquare(self):
         """
@@ -171,11 +179,22 @@ class MeanSquare:
             E.calculGRAD()
 
 
+    def calculTailleMoyenne(self):
+        listOfArea = np.array([E.get_Area() for E in self.elements])
+
+        return np.sqrt(np.sum(listOfArea**2)/len(listOfArea))
+
+
     def getElement(self,index : int):
         return self.elements[index]
 
     def setChamp(self, champ, grad):
-        self.champ = Champ(champ, grad)
+        try:
+            self.champ = Champ(champ, grad)
+
+        except TypeError:
+            print("Vous devez entrer des fonctions python")
+
 
     def debug(self):
         gradAnal = []
@@ -184,11 +203,39 @@ class MeanSquare:
         for E in self.elements:
             gradNum.append(E.get_grad())
             Coordinate = E.get_Coord()
-            print("Coordonnees : ",Coordinate)
+            print("Coord E{} : {} | Value : {}".format(E.index,Coordinate,E.get_value()))
             gradAnal.append(self.champ.grad(Coordinate[0], Coordinate[1]))
 
-        print("Analytique")
-        print(np.array(gradAnal))
-        print("Numerique")
-        print(np.array(gradNum))
+        print("Ei : Analytique | Numerique")
+        for i in range(len(gradAnal)):
+            print("E{} : {} | {}".format(i,gradAnal[i],gradNum[i]))
+
+    def error(self):
+        """
+        Calcul de l'erreur entre le gradient numérique et le gradient analytique.
+
+        Returns
+        -------
+        erreur : float
+            Erreur (norme L2) entre le gradient numérique et le gradient analytique.
+        """
+        gradAnal = []
+        gradNum = []
+
+        #Récupération du gradient numérique et calcul du gradient analytique pour chaque élément
+        for E in self.elements:
+            gradNum.append(E.get_grad())
+            Coordinate = E.get_Coord()
+            gradAnal.append(self.champ.grad(Coordinate[0], Coordinate[1]))
+
+        gradAnal = np.array(gradAnal)
+        gradNum = np.array(gradNum)
+
+        #Calcul de l'erreur (norme L2)
+        Dgrad = gradNum - gradAnal
+        S = np.sum((Dgrad[:,0]**2+Dgrad[:,1]**2))
+
+        return np.sqrt(S/len(self.elements))
+
+        
     

@@ -7,6 +7,8 @@ import numpy as np
 
 
 
+
+
 class Element():
 
     def __init__(self, mesh_obj :Mesh, index):
@@ -42,6 +44,7 @@ class Element():
         """
 
         self.index = index
+        self.mesh_obj = mesh_obj #Réference au maillage
 
         #Grandeurs du champs dans l'élément
         self.value = 0
@@ -52,6 +55,7 @@ class Element():
         self.B = np.zeros(2)
 
         #Calcul des coordonnées de l'élément
+        
         self.nodes = mesh_obj.get_element_to_nodes(self.index) #Liste des noeuds de l'élément
         self.nodesCoord = {} # Dictionnaire Node : Coordonnées
         for node in self.nodes:
@@ -60,6 +64,15 @@ class Element():
         self.ElementCoord = np.zeros(2) #Coordonnées du centre de l'élément
         for coord in self.nodesCoord.values():
             self.ElementCoord += coord/len(self.nodesCoord)
+
+        #Calcul de l'aire de l'élément
+        self.area = self.__private_Area()
+        print(self.area)
+
+        ####Debug#####
+        self.Blist = []
+        self.Alist = []
+        self.AListT = []
 
 
 ############ CALCULS ################
@@ -126,7 +139,7 @@ class Element():
         """
         Nodes = self.mesh_obj.get_face_to_nodes(face)
 
-        return self.nodesCoord[Nodes[0]] + (self.nodesCoord[Nodes[1]] - self.NodesCoord[Nodes[0]])/2  
+        return (self.nodesCoord[Nodes[0]] + self.nodesCoord[Nodes[1]])/2
 
     def calculFaceNormal(self, face : int):
         """
@@ -149,6 +162,16 @@ class Element():
         Normal = Normal / np.linalg.norm(Normal)
 
         return Normal
+    
+    def __private_Area(self):
+        n = len(self.nodes)
+        vertices = np.array([self.nodesCoord[node] for node in self.nodes])
+        
+        vertices = np.vstack([vertices, self.nodesCoord[self.nodes[0]]])
+        print(vertices)
+        #Calcul de l'aire de l'élément avec la formule du shoelace
+        return 0.5 * np.abs(np.sum(vertices[:-1,0]* vertices[1:,1] - vertices[1:,0]*vertices[:-1,1]))
+
 
     
 ########### GETTERS ################
@@ -160,9 +183,20 @@ class Element():
     
     def get_grad(self):
         return self.grad
+    
+    def get_Area(self):
+        return self.area
 
 ########## SETTERS ################   
     def set_value(self, value):
         self.value = value
 
+
+########## DEBUG ################
+    def storeB(self,Bld : np.ndarray):
+        self.Blist.append(Bld)
+
+    def storeA(self,Ald : np.ndarray,T : tuple):
+        self.Alist.append(Ald)
+        self.AListT.append(T)
 

@@ -1,11 +1,12 @@
 
 import numpy as np
 
+
 from  element import Element
 
 
 class CL:
-    def __init__(self, parameters : dict[int,(str,float)]):
+    def __init__(self, parameters : dict[int,(str,any)]):
 
         
         """
@@ -87,11 +88,14 @@ class CL:
             return np.zeros(2)
     
     def __private_Dirichlet_ATA(self,face:int,Eg:Element)->np.ndarray:
+
         FaceCenter = Eg.calculFaceCenter(face)
         EgCenter = Eg.get_Coord()
 
         DX = FaceCenter[0] - EgCenter[0]
         DY = FaceCenter[1] - EgCenter[1]
+
+        #print("E{} | EC : ({:.3f},{:.3f}) | FC : ({:.3f},{:.3f}) | (DX,DY) : ({:.3f},{:.3f})".format(Eg.index,EgCenter[0],EgCenter[1],FaceCenter[0],FaceCenter[1],DX,DY))
 
         Al = np.zeros((2,2))
         Al[0,0] = DX**2
@@ -99,7 +103,10 @@ class CL:
         Al[0,1] = DY*DX
         Al[1,1] = DY**2
 
-        return np.array([DX,DY])
+        #print(Al)
+        #print("\n")
+
+        return Al
     
     def __private_Neumann_ATA(self,face:int,Eg:Element)->np.ndarray:
         FaceCenter = Eg.calculFaceCenter(face)
@@ -128,8 +135,21 @@ class CL:
         DY = FaceCenter[1] - EgCenter[1]
 
         B = np.zeros(2)
-        B[0] = DX*(self.CLConfig[tag][1]-Eg.get_value())
-        B[1] = DY*(self.CLConfig[tag][1]-Eg.get_value())
+        PhiA = 0
+        if type(self.CLConfig[tag][1]) == float:
+            PhiA = self.CLConfig[tag][1]
+        elif callable(self.CLConfig[tag][1]):
+            PhiA = self.CLConfig[tag][1](FaceCenter[0],FaceCenter[1])
+
+        
+        B[0] = DX*(PhiA-Eg.get_value())
+        B[1] = DY*(PhiA-Eg.get_value())
+
+        #print("E{} | EC : ({:.3f},{:.3f}) | FC : ({:.3f},{:.3f}) | PhiA : {:.3f} | (DX,DY) : ({:.3f},{:.3f})".format(Eg.index,EgCenter[0],EgCenter[1],FaceCenter[0],FaceCenter[1],PhiA,DX,DY))
+        #print(FaceCenter,EgCenter)
+        #print(DX,DY)
+        #print("B:",B)
+        #print("\n")
 
         return B
     
