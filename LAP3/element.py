@@ -41,6 +41,21 @@ class Element():
         ElementCoord : ndarray
             Coordonnées du centre de l'élément
 
+        Notes
+        -----
+        La classe Element est utilis e pour stocker les informations
+        n cessaires pour l'assemblage du syst me de l' quation
+        aux d riv es partielles. Les grandeurs qui sont stock es
+        dans cet objet sont :
+        
+        * La valeur du champ au centre de l' élément
+        * Le gradient du champ au centre de l'élément
+        * La matrice ATA de l'élément
+        * La matrice B de l'élément
+        * Les coordonnées du centre de l'élément
+        * Les noeuds de l'élément
+        * Les coordonnées des noeuds de l'élément
+
         """
 
         self.index = index
@@ -154,7 +169,7 @@ class Element():
             Composantes de la normale à la face
         """
         Nodes = self.mesh_obj.get_face_to_nodes(face)
-        print(Nodes)
+
 
         Direction = self.nodesCoord[Nodes[1]] - self.nodesCoord[Nodes[0]]
         Normal = np.array([Direction[1],-Direction[0]])
@@ -162,7 +177,10 @@ class Element():
 
         return Normal
     
+############ PRIVATE ################
+
     def __private_Area(self):
+
         n = len(self.nodes)
         vertices = np.array([self.nodesCoord[node] for node in self.nodes])
         vertices = np.vstack([vertices, self.nodesCoord[self.nodes[0]]])
@@ -170,9 +188,6 @@ class Element():
         #Calcul de l'aire de l'élément avec la formule du shoelace
         return 0.5 * np.abs(np.sum(vertices[:-1,0]* vertices[1:,1] - vertices[1:,0]*vertices[:-1,1]))
 
-    def getGradNorm(self):
-        return np.linalg.norm(self.grad)
-    
 
     
     def __private_Center(self):
@@ -208,6 +223,9 @@ class Element():
     
     def get_Area(self):
         return self.area
+    
+    def getGradNorm(self):
+        return np.linalg.norm(self.grad)
 
 ########## SETTERS ################   
     def set_value(self, value):

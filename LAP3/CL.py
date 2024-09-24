@@ -1,5 +1,5 @@
 
-from joblib import PrintTime
+
 import numpy as np
 
 
@@ -90,13 +90,26 @@ class CL:
     
     def __private_Dirichlet_ATA(self,face:int,Eg:Element)->np.ndarray:
 
+        """
+        Calcul de la contribution de la condition de Dirichlet pour une face dans la matrice ATA.
+
+        Parameters
+        ----------
+        face : int
+            Numéro de la face.
+        Eg : Element
+            Élément concerné.
+
+        Returns
+        -------
+        Al : ndarray
+            Contribution de la condition de Dirichlet dans la matrice ATA.
+        """
         FaceCenter = Eg.calculFaceCenter(face)
         EgCenter = Eg.get_Coord()
 
         DX = FaceCenter[0] - EgCenter[0]
         DY = FaceCenter[1] - EgCenter[1]
-
-        #print("E{} | EC : ({:.3f},{:.3f}) | FC : ({:.3f},{:.3f}) | (DX,DY) : ({:.3f},{:.3f})".format(Eg.index,EgCenter[0],EgCenter[1],FaceCenter[0],FaceCenter[1],DX,DY))
 
         Al = np.zeros((2,2))
         Al[0,0] = DX**2
@@ -104,17 +117,29 @@ class CL:
         Al[0,1] = DY*DX
         Al[1,1] = DY**2
 
-        #print(Al)
-        #print("\n")
-
         return Al
     
     def __private_Neumann_ATA(self,face:int,Eg:Element)->np.ndarray:
+
+        """
+        Calcul de la contribution de la condition de Neumann pour une face dans la matrice ATA.
+
+        Parameters
+        ----------
+        face : int
+            Numéro de la face.
+        Eg : Element
+            Élément concerné.
+
+        Returns
+        -------
+        Al : ndarray
+            Contribution de la condition de Neumann dans la matrice ATA.
+        """
         FaceCenter = Eg.calculFaceCenter(face)
         EgCenter = Eg.get_Coord()
         Normal = Eg.calculFaceNormal(face)
 
-        print("A Face {}: {}".format(face,Normal))
 
         DX = FaceCenter[0] - EgCenter[0]
         DY = FaceCenter[1] - EgCenter[1]
@@ -131,6 +156,25 @@ class CL:
         return Al
     
     def __private_Dirichlet_B(self,tag:int,face:int,Eg:Element)->np.ndarray:
+
+        """
+        Calcul de la contribution de la condition de Dirichlet pour une face dans le second membre.
+
+        Parameters
+        ----------
+        tag : int
+            Tag de la face externe.
+        face : int
+            Numéro de la face.
+        Eg : Element
+            Élément concerné.
+
+        Returns
+        -------
+        Bld : ndarray
+            Contribution de la condition de Dirichlet dans le second membre.
+        """
+        
         FaceCenter = Eg.calculFaceCenter(face)
         EgCenter = Eg.get_Coord()
 
@@ -145,25 +189,33 @@ class CL:
         elif callable(self.CLConfig[tag][1]):
             PhiA = self.CLConfig[tag][1](FaceCenter[0],FaceCenter[1])
 
-        #print("E{} : PhiA : {:.3f} ".format(Eg.index,PhiA))
-
         B[0] = DX*(PhiA-Eg.get_value())
         B[1] = DY*(PhiA-Eg.get_value())
-
-        #print("E{} | EC : ({:.3f},{:.3f}) | FC : ({:.3f},{:.3f}) | PhiA : {:.3f} | (DX,DY) : ({:.3f},{:.3f})".format(Eg.index,EgCenter[0],EgCenter[1],FaceCenter[0],FaceCenter[1],PhiA,DX,DY))
-        #print(FaceCenter,EgCenter)
-        #print(DX,DY)
-        #print("B:",B)
-        #print("\n")
 
         return B
     
     def __private_Neumann_B(self,tag:int,face:int,Eg:Element)->np.ndarray:
+
+        """
+        Calcul de la contribution de la condition de Neumann pour une face dans le second membre.
+
+        Parameters
+        ----------
+        tag : int
+            Tag de la face externe.
+        face : int
+            Numéro de la face.
+        Eg : Element
+            Élément concerné.
+
+        Returns
+        -------
+        Bld : ndarray
+            Contribution de la condition de Neumann dans le second membre.
+        """
         FaceCenter = Eg.calculFaceCenter(face)
         EgCenter = Eg.get_Coord()
         Normal = Eg.calculFaceNormal(face)
-        print("B Face {}: {}".format(face,Normal))
-
 
         DX = FaceCenter[0] - EgCenter[0]
         DY = FaceCenter[1] - EgCenter[1]
@@ -173,11 +225,13 @@ class CL:
 
         B = np.zeros(2)
         
+        #Gradient de la fonction de contrôle exacte ou valeur constante
         if type(self.CLConfig[tag][1]) == float:
             G = self.CLConfig[tag][1]
         elif callable(self.CLConfig[tag][1]):
             G = self.CLConfig[tag][1](FaceCenter[0],FaceCenter[1])
 
+        #Calcul gradient normal à la face
         GNormal = G@Normal
 
         B[0] = DXn*(DX*Normal[0]+DY*Normal[1])*GNormal
