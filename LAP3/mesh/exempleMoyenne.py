@@ -41,7 +41,7 @@ def compute_moyenne(mesh_obj: Mesh, bcdata):
     B = np.zeros(number_of_elements)    
     
     # Boundary faces
-    for i_face in range(mesh_obj.get_number_of_boundary_faces()):
+    for i_face in range(mesh_obj.get_number_tof_boundary_faces()):
         
         tag = mesh_obj.get_boundary_face_to_tag(i_face)
         bc_type = bcdata[tag][0]

@@ -1,4 +1,5 @@
 import numpy as np
+from regex import E
 
 from mesh import Mesh
 from meshGenerator import MeshGenerator
@@ -36,12 +37,14 @@ class MeanSquare:
         None
         """
         mesher = MeshGenerator(verbose=False)
+        plotter = MeshPlotter()
 
 
         self.mesh_obj = mesher.rectangle([0.0, 1.0, 0.0, 1.0], mesh_parameters)
 
         conec = MeshConnectivity(self.mesh_obj,verbose=False)
         conec.compute_connectivity()
+        plotter.plot_mesh(self.mesh_obj, label_points=True, label_elements=True, label_faces=True)
 
 
 
@@ -90,6 +93,9 @@ class MeanSquare:
             elem = self.mesh_obj.get_face_to_elements(i)
             
             Eg = self.getElement(elem[0]) #Element gauche (existe toujours)
+           
+            #print(elem)
+
 
             if elem[1]!= -1: #face interne => élements droit et gauche
         
@@ -100,6 +106,8 @@ class MeanSquare:
                 DX = Ed.get_Coord()[0] - Eg.get_Coord()[0]
                 DY = Ed.get_Coord()[1] - Eg.get_Coord()[1]
 
+                #print("Face : F{}, Eg{}|Ed{} : DX : {} | DY : {}".format(i,Eg.index,Ed.index,DX,DY))
+
                 Ald = np.zeros((2,2))
                 Ald[0,0] = DX**2
                 Ald[1,0] = DX*DY
@@ -109,14 +117,18 @@ class MeanSquare:
                 Eg.ATA_add(Ald)
                 Ed.ATA_add(Ald)
 
-                #Eg.storeA(Ald,(Eg.index,Ed.index))
-                #Ed.storeA(Ald,(Ed.index,Eg.index))
+                Eg.storeA(Ald,(Eg.index,Ed.index))
+                Ed.storeA(Ald,(Ed.index,Eg.index))
 
             else: #face externe (prise en compte condition au limite)
                 #La classe CL, gère automatiquement les conditions au bord
                 Eg.ATA_add(self.CL.calculCL_ATA(self.mesh_obj.get_boundary_face_to_tag(i),i,Eg))
 
-                #Eg.storeA(self.CL.calculCL_ATA(self.mesh_obj.get_boundary_face_to_tag(i),i,Eg),(Eg.index,-1))
+                Eg.storeA(self.CL.calculCL_ATA(self.mesh_obj.get_boundary_face_to_tag(i),i,Eg),(Eg.index,-1))
+                #print(Eg.ATA)
+
+            
+            
 
 
     def constructionB(self):
@@ -132,8 +144,11 @@ class MeanSquare:
         -------
         None
         """
+
         
         for i in range(self.mesh_obj.get_number_of_faces()):
+
+            #print("Face : ",i)
 
             elem = self.mesh_obj.get_face_to_elements(i)
 
@@ -146,6 +161,7 @@ class MeanSquare:
                 DYE = Ed.get_Coord()[1] - Eg.get_Coord()[1]
 
                 Bld = np.zeros(2)
+                
                 Bld[0] = DXE*(Ed.get_value() - Eg.get_value())
                 Bld[1] = DYE*(Ed.get_value() - Eg.get_value())
 
@@ -153,13 +169,13 @@ class MeanSquare:
                 Ed.B_add(Bld)
 
 
-                #Eg.storeB(Bld)
-                #Ed.storeB(Bld)
+                Eg.storeB(Bld)
+                Ed.storeB(Bld)
             
             else: #face externe (prise en compte condition au limite)
                 Eg.B_add(self.CL.calculCL_B(self.mesh_obj.get_boundary_face_to_tag(i),i,Eg))
 
-                #Eg.storeB(self.CL.calculCL_B(self.mesh_obj.get_boundary_face_to_tag(i),i,Eg))
+                Eg.storeB(self.CL.calculCL_B(self.mesh_obj.get_boundary_face_to_tag(i),i,Eg))
     
     def calculMeanSquare(self):
         """
@@ -180,6 +196,7 @@ class MeanSquare:
 
     def calculTailleMoyenne(self):
         listOfArea = np.array([E.get_Area() for E in self.elements])
+        print("Surface Total : ",np.sum(listOfArea))
 
         return np.sqrt(np.sum(listOfArea**2)/len(listOfArea))
 
@@ -209,17 +226,21 @@ class MeanSquare:
         for i in range(len(gradAnal)):
             print("E{} : {} | {}".format(i,gradAnal[i],gradNum[i]))
 
+        NormsN = np.array([E.getGradNorm() for E in self.elements])
+        NormsA = np.array([np.linalg.norm(self.champ.grad(E.get_Coord()[0], E.get_Coord()[1])) for E in self.elements])
+
+        for i in range(len(NormsN)):
+            print("E{} : {:.4f} | {:.4f} | Delta : {:.4f}".format(i,NormsA[i],NormsN[i],NormsA[i]-NormsN[i]))
+        
+
     def error(self):
         
         NormsN = np.array([E.getGradNorm() for E in self.elements])
         NormsA = np.array([np.linalg.norm(self.champ.grad(E.get_Coord()[0], E.get_Coord()[1])) for E in self.elements])
-
-        #print(NormsA)
-        #print(NormsN)
+        AreaL = np.array([E.get_Area() for E in self.elements])
 
 
-
-        return np.sqrt(np.sum((NormsA-NormsN)**2)/len(self.elements))
+        return np.sqrt(np.sum((AreaL*(NormsA-NormsN))))
 
         
     

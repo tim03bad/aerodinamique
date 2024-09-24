@@ -61,9 +61,8 @@ class Element():
         for node in self.nodes:
             self.nodesCoord[node] = np.array([mesh_obj.get_node_to_xcoord(node),mesh_obj.get_node_to_ycoord(node)])
         
-        self.ElementCoord = np.zeros(2) #Coordonnées du centre de l'élément
-        for coord in self.nodesCoord.values():
-            self.ElementCoord += coord/len(self.nodesCoord)
+        #Calcul du centre de l'élément
+        self.ElementCoord = self.__private_Center()
 
         #Calcul de l'aire de l'élément
         self.area = self.__private_Area()
@@ -155,6 +154,7 @@ class Element():
             Composantes de la normale à la face
         """
         Nodes = self.mesh_obj.get_face_to_nodes(face)
+        print(Nodes)
 
         Direction = self.nodesCoord[Nodes[1]] - self.nodesCoord[Nodes[0]]
         Normal = np.array([Direction[1],-Direction[0]])
@@ -172,6 +172,29 @@ class Element():
 
     def getGradNorm(self):
         return np.linalg.norm(self.grad)
+    
+
+    
+    def __private_Center(self):
+
+        #construction du vecteur des noeuds
+        nodes = np.zeros((len(self.nodes),2))
+
+        for i in range(len(self.nodes)):
+            nodes[i] = self.nodesCoord[self.nodes[i]]
+        
+        nodes_closed = np.vstack([nodes, nodes[0]])
+        
+        #Aire avec la formule du determinant
+        A = 0.5 * np.sum(nodes_closed[:-1, 0] * nodes_closed[1:, 1] - nodes_closed[1:, 0] * nodes_closed[:-1, 1])
+
+        C_x = np.sum((nodes_closed[:-1,0] + nodes_closed[1:,0]) * 
+                     (nodes_closed[:-1,0] * nodes_closed[1:,1] - nodes_closed[1:,0]*nodes_closed[:-1,1])) / (6*A)
+
+        C_y = np.sum((nodes_closed[:-1, 1] + nodes_closed[1:, 1]) * 
+                 (nodes_closed[:-1, 0] * nodes_closed[1:, 1] - nodes_closed[1:, 0] * nodes_closed[:-1, 1])) / (6 * A)
+        
+        return np.array([C_x,C_y])
     
 ########### GETTERS ################
     def get_Coord(self):
