@@ -70,4 +70,6 @@ print("Error 2 : ",E2)
 #%%
 print("Ordre de convergence : ", np.log(E1/E2)/np.log(h1/h2))
 
+input("Input to close...")
+
 
