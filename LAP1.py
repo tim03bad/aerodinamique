@@ -202,34 +202,34 @@ def erreur(Y_numerique,Y_analytique,norme):
 '''affiche le graph de l'évolution de l'erreur en fonction du nombre de points de discrétisation pour l'exemple 1'''
 def evolution_erreur_1(k,A,L,nb_points_max,Ta,Tb,norme):
     erreurs=[]
+    absc=[]
     for i in range(5,nb_points_max):
         X,Y_numerique,Y_analytique=list_graph_1(k,A,L,i,Ta,Tb)
-        erreurs.append(erreur(Y_numerique,Y_analytique,norme))
-    X=[i for i in range(5,nb_points_max)]
-    plt.plot(X,erreurs)
-    plt.ylim(0, max(erreurs)*1.1)
+        erreurs.append(np.log(erreur(Y_numerique,Y_analytique,norme)))
+        absc.append(np.log(L/i))
+    plt.plot(absc,erreurs)
     plt.show()
     
 '''affiche le graph de l'évolution de l'erreur en fonction du nombre de points de discrétisation pour l'exemple 2'''
 def evolution_erreur_2(k,A,L,nb_points_max,Ta,Tb,q,norme):
     erreurs=[]
+    absc=[]
     for i in range(5,nb_points_max):
         X,Y_numerique,Y_analytique=list_graph_2(k,A,L,i,Ta,Tb,q)
-        erreurs.append(erreur(Y_numerique,Y_analytique,norme))
-    X=[i for i in range(5,nb_points_max)]
-    plt.plot(X,erreurs)
-    plt.ylim(0, max(erreurs)*1.1)
+        erreurs.append(np.log(erreur(Y_numerique,Y_analytique,norme)))
+        absc.append(np.log(L/i))
+    plt.plot(absc,erreurs)
     plt.show()
 
 '''affiche le graph de l'évolution de l'erreur en fonction du nombre de points de discrétisation pour l'exemple 3'''    
 def evolution_erreur_3(k,A,L,nb_points_max,Ta,p,h,T_ambient,norme):
     erreurs=[]
+    absc=[]
     for i in range(5,nb_points_max):
         X,Y_numerique,Y_analytique=list_graph_3(k,A,L,i,Ta,p,h,T_ambient)
-        erreurs.append(erreur(Y_numerique,Y_analytique,norme))
-    X=[i for i in range(5,nb_points_max)]
-    plt.plot(X,erreurs)
-    plt.ylim(0, max(erreurs)*1.1)
+        erreurs.append(np.log(erreur(Y_numerique,Y_analytique,norme)))
+        absc.append(np.log(L/i))
+    plt.plot(absc,erreurs)
     plt.show()
 
 def ordre_cv_1(k,A,L,nb_points,Ta,Tb,r):
@@ -255,11 +255,11 @@ def ordre_cv_3(k,A,L,nb_points,Ta,p,h,T_ambient,r):
 
 '''exemple 1'''
 k,A,L,nb_points,Ta,Tb = 1000,5*10*10**(-3),0.1,50,100,500
-nb_points_max=100
+nb_points_max=1000
 r=2
 X,Y_numerique,Y_analytique=list_graph_1(k,A,L,nb_points,Ta,Tb)
 graph(X,Y_numerique,Y_analytique)
-erreurs=evolution_erreur_1(k,A,L,nb_points_max,Ta,Tb,2)
+evolution_erreur_1(k,A,L,nb_points_max,Ta,Tb,2)
 print(ordre_cv_1(k,A,L,nb_points,Ta,Tb,r))
 
 '''exemple 2'''

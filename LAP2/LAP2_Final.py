@@ -1,7 +1,7 @@
 ''' 
 ############   LAP 2    ###############
 Emilien VIGIER
-Timothé BADICHE
+Timothée BADICHE
 #############           ###############
 '''
 

@@ -11,7 +11,7 @@ def grad(x,y):
     return np.array([np.cos(x),-np.sin(y)])
 
 #%%
-param = {0: ('D', fct),1:('D',fct),2:('D',fct),3:('D',fct)}
+param = {0: ('L', fct),1:('L',fct),2:('L',fct),3:('L',fct)}
 
 #Erreur
 E1 = 0
@@ -23,7 +23,7 @@ h2 = 0
 
 
 #%% Mesh 1
-mesh_parameters1 = {'mesh_type': 'TRI','lc': 0.05}
+mesh_parameters1 = {'mesh_type': 'QUAD','Nx': 500, 'Ny': 500}
 ms1 = MeanSquare(mesh_parameters1)
 ms1.createCL(param)
 ms1.setChamp(fct,grad)
@@ -36,7 +36,7 @@ h1 = ms1.calculTailleMoyenne()
 print("Error : ",E1)
 
 # %% Mesh 2
-mesh_parameters2 = {'mesh_type': 'TRI','lc': 0.01}
+mesh_parameters2 = {'mesh_type': 'QUAD','Nx': 600, 'Ny': 600}
 ms2 = MeanSquare(mesh_parameters2)
 ms2.createCL(param)
 ms2.setChamp(fct,grad)
@@ -49,5 +49,6 @@ h2 = ms2.calculTailleMoyenne()
 print("Error : ",E2)
 
 #%% Ordre de convergence
+
 print("Ordre de convergence : ", np.log(E2/E1)/np.log(h2/h1))
 # %%

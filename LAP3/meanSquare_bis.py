@@ -70,11 +70,98 @@ class MeanSquare:
 
     def createCL(self,parameters : dict[int,(str,any)]):
         self.CL = CL(parameters)
+        
+    def e_ksi(self, i_face):
+        
+        """
+        Construction du vecteur e_ksi
 
-    def constructionATA(self):
+        Parameters
+        ----------
+        i_face : int
+            Identifiant de la face
+
+        Returns
+        -------
+        ndarray
+            Composantes du vecteur e_ksi
+        """
+        
+        e_ksi = np.zeros(2)
+        
+        elem = self.mesh_obj.get_face_to_elements(i_face)
+        
+        XA, YA = elem[0].get_Coord()[0], elem[0].get_Coord()[1]
+        XP, YP = elem[1].get_Coord()[0], elem[1].get_Coord()[1]
+        
+        delta_ksi = np.sqrt((XA-XP)**2 + (YA-YP)**2)
+        e_ksi[0] = (XA-XP)/delta_ksi
+        e_ksi[1] = (YA-YP)/delta_ksi
+        
+        return e_ksi
+    
+    def e_eta(self, i_face):
+        
+        """
+        Construction du vecteur e_eta
+
+        Parameters
+        ----------
+        i_face : int
+            Identifiant de la face
+
+        Returns
+        -------
+        ndarray
+            Composantes du vecteur e_eta
+        """
+        
+        e_eta = np.zeros(2)
+        
+        nodes = self.mesh_obj.get_faces_to_nodes(i_face)
+
+        xa, ya = nodes[0].get_Coord()[0], nodes[0].get_Coord()[1]
+        xb, yb = nodes[1].get_Coord()[0], nodes[1].get_Coord()[1]
+        
+        delta_eta = np.sqrt((xa-xb)**2 + (ya-yb)**2)
+        e_eta[0] = (xa-xb)/delta_eta
+        e_eta[1] = (ya-yb)/delta_eta
+        
+        return e_eta
+    
+    def normal(self, i_face):
+        
+        """
+        Construction du vecteur normalisé
+
+        Parameters
+        ----------
+        i_face : int
+            Identifiant de la face
+
+        Returns
+        -------
+        ndarray
+            Composantes du vecteur normalisé
+        """
+        
+        normal = np.zeros(2)
+        
+        nodes = self.mesh_obj.get_faces_to_nodes(i_face)
+
+        xa, ya = nodes[0].get_Coord()[0], nodes[0].get_Coord()[1]
+        xb, yb = nodes[1].get_Coord()[0], nodes[1].get_Coord()[1]
+        
+        delta_A = np.sqrt((xa-xb)**2 + (ya-yb)**2)
+        normal[0] = (ya-yb)/delta_A
+        normal[1] = -(xa-xb)/delta_A
+        
+        return normal
+    
+    def constructionA(self, gamma):
 
         """
-        Construction de la matrice ATA
+        Construction de la matrice A
 
         Parameters
         ----------
@@ -85,29 +172,47 @@ class MeanSquare:
         None
         """
         
-        for i in range(self.mesh_obj.get_number_of_faces()):
+        nb_face = self.mesh_obj.get_number_of_faces()
+        A = np.zeros((nb_face,nb_face))        
+        
+        e_ksi = np.zeros(2)
+        normal = np.zeros(2)
+        
+        for i in range(nb_face):
 
             elem = self.mesh_obj.get_face_to_elements(i)
+            nodes = self.mesh_obj.get_faces_to_nodes(i)
             
             Eg = self.getElement(elem[0]) #Element gauche (existe toujours)
-
+            
+            e_ksi = e_ksi(i)
+            normal = normal(i)
+            
+            PNKSI = np.dot(normal, e_ksi)
+            
             if elem[1]!= -1: #face interne => élements droit et gauche
-        
                 
                 Ed = self.getElement(elem[1]) #Element droit si existe
 
                 #Calcul des Delta centre à centre
-                DX = Ed.get_Coord()[0] - Eg.get_Coord()[0]
-                DY = Ed.get_Coord()[1] - Eg.get_Coord()[1]
+                XA, YA = Ed.get_Coord()[0], Ed.get_Coord()[1]
+                XP, YP = Eg.get_Coord()[0], Eg.get_Coord()[1]
+                
+                delta_ksi = np.sqrt((XA-XP)**2 + (YA-YP)**2)
+                
+                xa, ya = nodes[0].get_Coord()[0], nodes[0].get_Coord()[1]
+                xb, yb = nodes[1].get_Coord()[0], nodes[1].get_Coord()[1]
+                
+                delta_A = np.sqrt((xa-xb)**2 + (ya-yb)**2)
+                
+                Di = gamma/PNKSI*delta_A/delta_ksi
+                j = Ed.index
+                k = Eg.index
 
-                Ald = np.zeros((2,2))
-                Ald[0,0] = DX**2
-                Ald[1,0] = DX*DY
-                Ald[0,1] = DY*DX
-                Ald[1,1] = DY**2
-
-                Eg.ATA_add(Ald)
-                Ed.ATA_add(Ald)
+                A[k,k] += Di
+                A[j,j] += Di
+                A[k,j] -= Di
+                A[j,k] -= Di
 
                 #Eg.storeA(Ald,(Eg.index,Ed.index))
                 #Ed.storeA(Ald,(Ed.index,Eg.index))
@@ -118,8 +223,7 @@ class MeanSquare:
 
                 #Eg.storeA(self.CL.calculCL_ATA(self.mesh_obj.get_boundary_face_to_tag(i),i,Eg),(Eg.index,-1))
 
-
-    def constructionB(self):
+    def constructionB(self, gamma):
 
         """
         Construction du second membre B
@@ -133,26 +237,42 @@ class MeanSquare:
         None
         """
         
-        for i in range(self.mesh_obj.get_number_of_faces()):
+        nb_face = self.mesh_obj.get_number_of_faces()
+        B = np.zeros((nb_face,nb_face)) 
+        
+        e_ksi = np.zeros(2)
+        e_eta = np.zeros(2)
+        normal = np.zeros(2)
+        
+        for i in range(nb_face):
 
             elem = self.mesh_obj.get_face_to_elements(i)
-
+            nodes = self.mesh_obj.get_faces_to_nodes(i)
+            
             Eg = self.getElement(elem[0]) #Element gauche (existe toujours)
+            
+            e_ksi = e_ksi(i)
+            e_eta = e_eta(i)
+            normal = normal(i)
+            
+            PNKSI = np.dot(normal, e_ksi)
+            PKSIETA = np.dot(e_eta, e_ksi)
 
             if elem[1]!= -1: #face interne
                 Ed = self.getElement(elem[1])
 
-                DXE = Ed.get_Coord()[0] - Eg.get_Coord()[0]
-                DYE = Ed.get_Coord()[1] - Eg.get_Coord()[1]
+                xa, ya = nodes[0].get_Coord()[0], nodes[0].get_Coord()[1]
+                xb, yb = nodes[1].get_Coord()[0], nodes[1].get_Coord()[1]
+                
+                phia, phib = self.champ.grad(xa, ya), self.champ.grad(xb, yb)
+                
+                Sdci = -gamma*(phib-phia)*(PKSIETA/PNKSI)
+                
+                j = Ed.index
+                k = Eg.index
 
-                Bld = np.zeros(2)
-                Bld[0] = DXE*(Ed.get_value() - Eg.get_value())
-                Bld[1] = DYE*(Ed.get_value() - Eg.get_value())
-
-                Eg.B_add(Bld)
-                Ed.B_add(Bld)
-
-
+                B[k] += Sdci
+                B[j] -= Sdci
                 #Eg.storeB(Bld)
                 #Ed.storeB(Bld)
             
@@ -160,22 +280,6 @@ class MeanSquare:
                 Eg.B_add(self.CL.calculCL_B(self.mesh_obj.get_boundary_face_to_tag(i),i,Eg))
 
                 #Eg.storeB(self.CL.calculCL_B(self.mesh_obj.get_boundary_face_to_tag(i),i,Eg))
-    
-    def calculMeanSquare(self):
-        """
-        Calcul du gradient de chaque élément par résolution du système
-        linéaire ATA X = B
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
-        """
-        for E in self.elements:
-            E.calculGRAD()
 
 
     def calculTailleMoyenne(self):
