@@ -6,6 +6,7 @@ import numpy as np
 from mesh import Mesh
 from meshConnectivity import MeshConnectivity
 from meshGenerator import MeshGenerator
+from meshPlotter import MeshPlotter
 
 from meanSquare import MeanSquare
 from element import Element
@@ -51,11 +52,11 @@ def FaceCoordinatesCalcultion(mesh_obj: Mesh,Eg : Element,Ed : Element ,face : i
     Ya = mesh_obj.node_to_ycoord[FaceNodes[0]]
     Yb = mesh_obj.node_to_ycoord[FaceNodes[1]]
 
-    XA = Eg.Center[0]
-    XP = Ed.Center[0]
+    XA = Eg.ElementCoord[0]
+    XP = Ed.ElementCoord[0]
 
-    YA = Eg.Center[1]
-    YP = Ed.Center[1]
+    YA = Eg.ElementCoord[1]
+    YP = Ed.ElementCoord[1]
 
     return dataFace(Xa,Xb,Ya,Yb,XA,XP,YA,YP)
 
@@ -83,6 +84,7 @@ def Di(P_nksi : float,Gamma : float,DAi : float,dKsi : float):
     return (1/P_nksi)*(Gamma*DAi)/dKsi
 
 def Sdcross(P_nksi : float,P_ksieta : float,Gamma : float,DAi : float, Eg : Element, Ed : Element,eta : np.ndarray):
+    
     Vect = (Eg.get_grad()+Ed.get_grad())/2
 
     return -Gamma*(P_ksieta/P_nksi)*(Vect@eta)*DAi
@@ -94,7 +96,7 @@ Ly = 1
 
 mesh_params_T = {
     'mesh_type': 'TRI',
-    'lc': 0.5
+    'lc': 0.4
 }
 
 mesh_params_Q = {
@@ -118,11 +120,14 @@ conecT.compute_connectivity()
 conecQ.compute_connectivity()
 
 CL_paramsT = {
-    0:('D',1),
+    0:('D',100),
     1:('N', 0),
-    2:('D',0),
+    2:('D',200),
     3:('N',0)
 }
+
+plotter = MeshPlotter()
+plotter.plot_mesh(mesh_objT, label_points=True, label_elements=True, label_faces=True)
 
 #%% Stockage des données
 TriangleList = [Element(mesh_objT, i) for i in range(mesh_objT.get_number_of_elements())]
@@ -139,96 +144,112 @@ Aq = np.zeros((len(QuadList),len(QuadList)))
 Bt = np.zeros(len(TriangleList))
 Bq = np.zeros(len(QuadList))
 
-GradCalculatorT = MeanSquare(TriangleList,TriangleList,CL_paramsT)
+GradCalculatorT = MeanSquare(mesh_objT,TriangleList,CL_paramsT)
 
 #%% Calcul Triangle
 
-NbBoundaryFaces = mesh_objT.get_number_of_boundary_faces()
-NbFaces = mesh_objT.get_number_of_faces()
+# On fait 4 itérations de calcul
+for i in range(1):
+    NbBoundaryFaces = mesh_objT.get_number_of_boundary_faces()
+    NbFaces = mesh_objT.get_number_of_faces()
 
-for i in range(NbBoundaryFaces):
-    tag = mesh_objT.get_boundary_face_to_tag(i)
-    elems = mesh_objT.get_face_to_elements(i)
-    #Que le triangle gauche, le droit n'existe pas
-    Eg = TriangleList[elems[0]]
+    print("\n\n Iteration : {}\n\n".format(i))
 
-    FaceNodes = mesh_objT.get_face_to_nodes(i)
+    for i in range(NbBoundaryFaces):
+        tag = mesh_objT.get_boundary_face_to_tag(i)
+        elems = mesh_objT.get_face_to_elements(i)
+        #Que le triangle gauche, le droit n'existe pas
+        Eg = TriangleList[elems[0]]
 
-    Xa = mesh_objT.node_to_xcoord[FaceNodes[0]]
-    Xb = mesh_objT.node_to_xcoord[FaceNodes[1]]
+        FaceNodes = mesh_objT.get_face_to_nodes(i)
 
-    Ya = mesh_objT.node_to_ycoord[FaceNodes[0]]
-    Yb = mesh_objT.node_to_ycoord[FaceNodes[1]]
+        Xa = mesh_objT.node_to_xcoord[FaceNodes[0]]
+        Xb = mesh_objT.node_to_xcoord[FaceNodes[1]]
 
-    DAi = np.sqrt((Xb-Xa)**2+(Yb-Ya)**2)
+        Ya = mesh_objT.node_to_ycoord[FaceNodes[0]]
+        Yb = mesh_objT.node_to_ycoord[FaceNodes[1]]
 
-    if CL_paramsT[tag][0] == 'D':
+        DAi = np.sqrt((Xb-Xa)**2+(Yb-Ya)**2)
 
-        XA = Eg.Center[0]
-        YA = Eg.Center[1]
+        if CL_paramsT[tag][0] == 'D':
 
-        XP = (Xa+Xb)/2
-        YP = (Ya+Yb)/2
+            XA = Eg.ElementCoord[0]
+            YA = Eg.ElementCoord[1]
 
-        dKsi = np.sqrt((XA-XP)**2+(YA-YP)**2)
+            XP = (Xa+Xb)/2
+            YP = (Ya+Yb)/2
 
-        data = dataFace(Xa,Ya,Xb,Yb,XA,YA,XP,YP)
+            dKsi = np.sqrt((XA-XP)**2+(YA-YP)**2)
+
+            data = dataFace(Xa,Ya,Xb,Yb,XA,YA,XP,YP)
+
+            P_nksi = Pnksi(data,DAi,dKsi)
+            P_ksieta = Pksieta(data,DAi,dKsi)
+
+            eta = np.array([data.Xb-data.Xa,data.Yb-data.Ya])
+
+            di = (Gamma/P_nksi)*(DAi/dKsi)
+        
+        ##################  Pas sure du tout , j'approx phi_b-phi_a par gradPhi(A).eta
+            sdcross = -Gamma*(P_ksieta/P_nksi)*(Eg.get_grad()@eta)*DAi
+            
+            At[elems[0],elems[1]] += di
+            Bt[elems[0]] += sdcross + di*CL_paramsT[tag][1]
+            
+
+        elif CL_paramsT[tag][0] == 'N':
+            Bt[elems[0]] += Gamma*CL_paramsT[tag][1]*DAi
+
+
+
+    # Calcul hors fontières limites, uniquement face interne
+
+    for i in range(NbBoundaryFaces,NbFaces):
+        elems = mesh_objT.get_face_to_elements(i)
+        #Elems[0] = Triangle gauche
+        #Elems[1] = Triangle droit
+
+        Eg = TriangleList[elems[0]]
+        Ed = TriangleList[elems[1]]
+
+        data = FaceCoordinatesCalcultion(mesh_objT,Eg,Ed,i)
+
+        DAi = np.sqrt((data.Xa-data.Xb)**2+(data.Ya-data.Yb)**2)
+        dKsi = np.sqrt((data.XA-data.XP)**2+(data.YA-data.YP)**2)
 
         P_nksi = Pnksi(data,DAi,dKsi)
-        P_ksieta = Pksieta(data,DAi,dKsi)
+        P_ksieta = Pksieta(data,dKsi,DAi)
 
-        
-        
+        eta = np.array([data.Xb-data.Xa,data.Yb-data.Ya])
 
-        pass
+        di = Di(P_nksi,Gamma,DAi,dKsi)
+        sdcross = Sdcross(P_nksi,P_ksieta,Gamma,DAi,Eg,Ed,eta)
 
-    elif CL_paramsT[tag][0] == 'N':
-        Bt[elems[0]] += Gamma*CL_paramsT[tag][1]*DAi
+        At[elems[0],elems[0]] += di
+        At[elems[1],elems[1]] += di
 
+        At[elems[0],elems[1]] -= di
+        At[elems[1],elems[0]] -= di
 
+        Bt[elems[0]] += sdcross
+        Bt[elems[1]] += sdcross
 
-# Calcul hors fontières limites, uniquement face interne
+    Phi = np.linalg.solve(At,Bt)
 
-for i in range(NbBoundaryFaces,NbFaces):
-    elems = mesh_objT.get_face_to_elements(i)
-    #Elems[0] = Triangle gauche
-    #Elems[1] = Triangle droit
+    for elem_i in range(len(TriangleList)):
+        TriangleList[elem_i].set_value(Phi[elem_i])
 
-    Eg = TriangleList[elems[0]]
-    Ed = TriangleList[elems[1]]
+    for elem in TriangleList:
+        print("Valeur du triangle {} : {}".format(elem.index,elem.get_value()))
 
-    data = FaceCoordinatesCalcultion(mesh_objT,Eg,Ed,i)
-
-    DAi = np.sqrt((data.Xa-data.Xb)**2+(data.Ya-data.Yb)**2)
-    dKsi = np.sqrt((data.XA-data.XP)**2+(data.YA-data.YP)**2)
-
-    P_nksi = Pnksi(data,DAi,dKsi)
-    P_ksieta = Pksieta(data,dKsi,DAi)
-
-    eta = np.array([data.Xb-data.Xa,data.Yb-data.Ya])
-
-    di = Di(P_nksi,Gamma,DAi,dKsi)
-    sdcross = Sdcross(P_nksi,P_ksieta,Gamma,DAi,Eg,Ed,eta)
-
-    At[elems[0],elems[0]] += di
-    At[elems[1],elems[1]] += di
-
-    At[elems[0],elems[1]] -= di
-    At[elems[1],elems[0]] -= di
-
-    Bt[elems[0]] += sdcross
-    Bt[elems[1]] += sdcross
-
-Phi = np.linalg.solve(At,Bt)
-
-for elem_i in range(len(TriangleList)):
-    TriangleList[elem_i].set_value(Phi[elem_i])
-
-#Avec les valeur du champs mise à jour, on calcule un nouveau gradient
-GradCalculatorT.compute_gradient(TriangleList)
+    #Avec les valeur du champs mise à jour, on calcule un nouveau gradient
+    GradCalculatorT.updateElements(TriangleList)
+    GradCalculatorT.calculMeanSquare()
 
 
-
+#%%
+for elem in TriangleList:
+    print("Triangle {} : {}".format(elem.index,elem.get_grad()))
 
 
 

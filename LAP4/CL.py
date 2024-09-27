@@ -184,10 +184,12 @@ class CL:
         B = np.zeros(2)
         PhiA = 0
 
-        if type(self.CLConfig[tag][1]) == float:
-            PhiA = self.CLConfig[tag][1]
-        elif callable(self.CLConfig[tag][1]):
+        
+        if callable(self.CLConfig[tag][1]):
             PhiA = self.CLConfig[tag][1](FaceCenter[0],FaceCenter[1])
+        else:
+            PhiA = self.CLConfig[tag][1]
+        
 
         B[0] = DX*(PhiA-Eg.get_value())
         B[1] = DY*(PhiA-Eg.get_value())
@@ -226,13 +228,17 @@ class CL:
         B = np.zeros(2)
         
         #Gradient de la fonction de contrôle exacte ou valeur constante
-        if type(self.CLConfig[tag][1]) == float:
-            G = self.CLConfig[tag][1]
-        elif callable(self.CLConfig[tag][1]):
+            
+        if callable(self.CLConfig[tag][1]):
             G = self.CLConfig[tag][1](FaceCenter[0],FaceCenter[1])
 
+        else:
+            G = self.CLConfig[tag][1]
+
         #Calcul gradient normal à la face
-        GNormal = G@Normal
+         #GNormal = G@Normal
+        #Ici je passe tjrs le gradien normal =>
+        GNormal = G
 
         B[0] = DXn*(DX*Normal[0]+DY*Normal[1])*GNormal
         B[1] = DYn*(DX*Normal[0]+DY*Normal[1])*GNormal

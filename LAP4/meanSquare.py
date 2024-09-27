@@ -55,7 +55,7 @@ class MeanSquare:
 
 
 
-    def updateElements(self):
+    def updateElements(self,ElementsList: list[Element]):
         
         """
         Reconstruction des elements du maillage et réinitialisation du champ
@@ -70,10 +70,7 @@ class MeanSquare:
         """
 
         #Construction des elements
-        self.elements = [Element(self.mesh_obj, i) for i in range(self.mesh_obj.get_number_of_elements())] 
-
-        #Initialisation du champ dans les elements
-        self.champ.set_ElementsValue(self.elements)
+        self.elements = ElementsList
 
 
 
@@ -192,6 +189,8 @@ class MeanSquare:
         -------
         None
         """
+        self.constructionATA()
+        self.constructionB()
         for E in self.elements:
             E.calculGRAD()
 
@@ -276,12 +275,6 @@ class MeanSquare:
     def setCL(self,CL_parameters : dict[int,(str,any)]):
         self.CL = CL(CL_parameters)
 
-    def setChamp(self, champ, grad):
-        try:
-            self.champ = Champ(champ, grad)
-
-        except TypeError:
-            print("Vous devez entrer des fonctions python")
 
 
 ######## Debug ##########
