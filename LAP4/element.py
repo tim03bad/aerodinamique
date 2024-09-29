@@ -231,6 +231,8 @@ class Element():
     def set_value(self, value):
         self.value = value
 
+    def set_grad(self, gradX,gradY):
+        self.grad = np.array([gradX,gradY])
 
 ########## DEBUG ################
     def storeB(self,Bld : np.ndarray):

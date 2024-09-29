@@ -28,7 +28,7 @@ class CL:
 
         self.CLConfig = parameters
     
-    def calculCL_A(self,tag : int,face : int,Eg : Element)->np.ndarray:
+    def calculCL_ATA(self,tag : int,face : int,Eg : Element)->np.ndarray:
         
         """
         Calcul de la contribution de la condition au bord pour une face dans la matrice ATA.
@@ -50,11 +50,11 @@ class CL:
         
         if self.CLConfig[tag][0] == "D": #Dirichlet
 
-            return self.__private_Dirichlet_A(face,Eg)
+            return self.__private_Dirichlet_ATA(face,Eg)
         
         elif self.CLConfig[tag][0] == "N": #Neumann
 
-            return self.__private_Neumann_A(face,Eg)
+            return self.__private_Neumann_ATA(face,Eg)
         
         else: #Libre
             

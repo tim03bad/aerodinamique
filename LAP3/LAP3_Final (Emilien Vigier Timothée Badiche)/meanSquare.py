@@ -309,15 +309,6 @@ class MeanSquare:
         for i in range(len(gradAnal)):
             print("E{} : {} | {}".format(i,gradAnal[i],gradNum[i]))
 
-<<<<<<< HEAD
-    def error(self):
-        
-        NormsN2 = np.array(np.linalg.norm(np.array([E.get_grad()-self.champ.grad(E.get_Coord()[0], E.get_Coord()[1]) for E in self.elements]))**2)
-        
-
-
-        return np.sqrt(np.sum(NormsN2)/len(self.elements))
-=======
         NormsN = np.array([E.getGradNorm() for E in self.elements])
         NormsA = np.array([np.linalg.norm(self.champ.grad(E.get_Coord()[0], E.get_Coord()[1])) for E in self.elements])
         print("##################################### \n\n")
@@ -327,7 +318,6 @@ class MeanSquare:
         
 
 
->>>>>>> 63cddedb4bf3883df5e89745f0a89503ecc92a52
 
         
     def plot(self):

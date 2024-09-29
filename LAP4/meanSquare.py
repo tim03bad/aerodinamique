@@ -12,7 +12,7 @@ from champ import Champ
 from CL import CL
 
 class MeanSquare:
-    def __init__(self,mesh_obj : Mesh,CL_parameters : dict[int,(str,any)],champ,grad):
+    def __init__(self,mesh_obj : Mesh,ElementsList: list[Element],CL_parameters : dict[int,(str,any)]):
 
         """
         Constructeur de l'objet MeanSquare
@@ -51,19 +51,11 @@ class MeanSquare:
 
         self.CL = CL(CL_parameters)
 
-        try:
-            self.champ = Champ(champ, grad)
-
-        except TypeError:
-            print("Vous devez entrer des fonctions python")
-
-
-        self.elements = [Element(self.mesh_obj, i) for i in range(self.mesh_obj.get_number_of_elements())] 
-        self.champ.set_ElementsValue(self.elements)
+        self.elements = ElementsList
 
 
 
-    def updateElements(self):
+    def updateElements(self,ElementsList: list[Element]):
         
         """
         Reconstruction des elements du maillage et réinitialisation du champ
@@ -78,10 +70,7 @@ class MeanSquare:
         """
 
         #Construction des elements
-        self.elements = [Element(self.mesh_obj, i) for i in range(self.mesh_obj.get_number_of_elements())] 
-
-        #Initialisation du champ dans les elements
-        self.champ.set_ElementsValue(self.elements)
+        self.elements = ElementsList
 
 
 
@@ -200,6 +189,8 @@ class MeanSquare:
         -------
         None
         """
+        self.constructionATA()
+        self.constructionB()
         for E in self.elements:
             E.calculGRAD()
 
@@ -284,12 +275,6 @@ class MeanSquare:
     def setCL(self,CL_parameters : dict[int,(str,any)]):
         self.CL = CL(CL_parameters)
 
-    def setChamp(self, champ, grad):
-        try:
-            self.champ = Champ(champ, grad)
-
-        except TypeError:
-            print("Vous devez entrer des fonctions python")
 
 
 ######## Debug ##########
@@ -309,15 +294,6 @@ class MeanSquare:
         for i in range(len(gradAnal)):
             print("E{} : {} | {}".format(i,gradAnal[i],gradNum[i]))
 
-<<<<<<< HEAD
-    def error(self):
-        
-        NormsN2 = np.array(np.linalg.norm(np.array([E.get_grad()-self.champ.grad(E.get_Coord()[0], E.get_Coord()[1]) for E in self.elements]))**2)
-        
-
-
-        return np.sqrt(np.sum(NormsN2)/len(self.elements))
-=======
         NormsN = np.array([E.getGradNorm() for E in self.elements])
         NormsA = np.array([np.linalg.norm(self.champ.grad(E.get_Coord()[0], E.get_Coord()[1])) for E in self.elements])
         print("##################################### \n\n")
@@ -327,7 +303,6 @@ class MeanSquare:
         
 
 
->>>>>>> 63cddedb4bf3883df5e89745f0a89503ecc92a52
 
         
     def plot(self):
