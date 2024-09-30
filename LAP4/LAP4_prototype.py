@@ -293,7 +293,7 @@ def Phi(mesh_objQ : Mesh, CL_paramsT : dict[int,(str,any)], QuadList : list, Gra
         NbBoundaryFaces = mesh_objQ.get_number_of_boundary_faces()
         NbFaces = mesh_objQ.get_number_of_faces()
     
-        print("\n\n Iteration : {}\n\n".format(i))
+        #print("\n\n Iteration : {}\n\n".format(i))
     
         for i in range(NbBoundaryFaces):
             tag = mesh_objQ.get_boundary_face_to_tag(i)
@@ -384,8 +384,8 @@ def Phi(mesh_objQ : Mesh, CL_paramsT : dict[int,(str,any)], QuadList : list, Gra
         for elem_i in range(len(QuadList)):
             QuadList[elem_i].set_value(Phi[elem_i])
     
-        for elem in QuadList:
-            print("Valeur du carré {} : {}".format(elem.index,elem.get_value()))
+        #for elem in QuadList:
+        #    print("Valeur de l'élément {} : {}".format(elem.index,elem.get_value()))
     
         #Avec les valeur du champs mise à jour, on calcule un nouveau gradient
         GradCalculatorQ.updateElements(QuadList)
@@ -415,7 +415,7 @@ def erreur_quadratique(Phi, Phi_ana):
         erreur += (Phi[i] - Phi_ana[i])**2
     return np.sqrt(erreur/len(Phi))
 
-#%%Calcul de la convergence
+#%%Calcul de la convergence du cas carré
 
 Phi_grossier = Phi(mesh_objQ_grossier, CL_paramsT, QuadList_grossier, GradCalculatorQ_grossier)
 Phi_ana_grossier = Phi_ana(QuadList_grossier)
@@ -429,5 +429,20 @@ h_grossier =  GradCalculatorQ_grossier.calculTailleMoyenne()
 E_fine = erreur_quadratique(Phi_fin, Phi_ana_fin)
 E_grossière = erreur_quadratique(Phi_grossier, Phi_ana_grossier)
 
-print("Ordre de convergence : ", np.log(E_grossière/E_fine)/np.log(h_grossier/h_fin))
+print("Ordre de convergence du cas carré : {} \n".format(np.log(E_grossière/E_fine)/np.log(h_grossier/h_fin)))
 
+#%%Calcul de la convergence du cas triangulaire
+
+Phi_grossier = Phi(mesh_objT_grossier, CL_paramsT, TriangleList_grossier, GradCalculatorT_grossier)
+Phi_ana_grossier = Phi_ana(TriangleList_grossier)
+
+Phi_fin = Phi(mesh_objT_fin, CL_paramsT, TriangleList_fin, GradCalculatorT_fin)
+Phi_ana_fin = Phi_ana(TriangleList_fin)
+
+h_fin = GradCalculatorT_fin.calculTailleMoyenne()
+h_grossier =  GradCalculatorT_grossier.calculTailleMoyenne()
+
+E_fine = erreur_quadratique(Phi_fin, Phi_ana_fin)
+E_grossière = erreur_quadratique(Phi_grossier, Phi_ana_grossier)
+
+print("Ordre de convergence du cas triangulaire : {} \n".format(np.log(E_grossière/E_fine)/np.log(h_grossier/h_fin)))
