@@ -18,7 +18,6 @@ from solver import Solver
 Lx = 1
 Ly = 1
 
-
 mesh_params_Q = {
     'mesh_type': 'QUAD',
     'Nx': 100,
