@@ -196,6 +196,25 @@ class Solver:
             self._SolAnalytique = fct
         else:
             raise TypeError("SolAnalytique must be a function")
+        
+    def getMeanElementSize(self):
+        return self._MS.calculTailleMoyenne()
+
+    def coupeY(self,Y:float):
+        
+        for elem in self._PolyList:
+
+            Nodes = self._mesh.get_element_to_nodes(elem.index)
+
+            NodesCoords = np.array((len(Nodes),2))
+
+            for node_i in range(len(Nodes)):
+                NodesCoords[node_i,0] = self._mesh.get_node_to_xcoord(Nodes[node_i])
+                NodesCoords[node_i,1] = self._mesh.get_node_to_ycoord(Nodes[node_i])
+
+            print(NodesCoords)
+            
+
 
 
 
