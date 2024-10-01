@@ -91,7 +91,7 @@ plotter.plot_mesh(mesh_objQ_fin, label_points=True, label_elements=True, label_f
 #%% Calcul du champ
 
 # On fait 4 itérations de calcul
-def Phi(mesh_objQ : Mesh, CL_paramsT : dict[int,(str,any)], QuadList : list, GradCalculatorQ : MeanSquare):
+def Phi(mesh_objQ : Mesh, CL_paramsT : dict[int,(str,any)], QuadList : list, GradCalculatorQ : MeanSquare, crossdiffusion : bool):
     
     Aq = np.zeros((len(QuadList),len(QuadList)))
     Bq = np.zeros(len(QuadList))
@@ -138,10 +138,13 @@ def Phi(mesh_objQ : Mesh, CL_paramsT : dict[int,(str,any)], QuadList : list, Gra
                 di = (Gamma/P_nksi)*(DAi/dKsi)
             
             ##################  Pas sure du tout , j'approx phi_b-phi_a par gradPhi(A).eta
-                sdcross = -Gamma*(P_ksieta/P_nksi)*(Eg.get_grad()@eta)*DAi
+                Aq[elems[0],elems[0]] += di    
                 
-                Aq[elems[0],elems[0]] += di
-                Bq[elems[0]] += sdcross + di*CL_paramsT[tag][1]
+                if crossdiffusion : 
+                    sdcross = -Gamma*(P_ksieta/P_nksi)*(Eg.get_grad()@eta)*DAi
+                    Bq[elems[0]] += sdcross + di*CL_paramsT[tag][1]
+                else :
+                    Bq[elems[0]] += di*CL_paramsT[tag][1]
                 
     
             elif CL_paramsT[tag][0] == 'N':
@@ -170,16 +173,18 @@ def Phi(mesh_objQ : Mesh, CL_paramsT : dict[int,(str,any)], QuadList : list, Gra
             eta = df.e_eta(data)
     
             di = df.Di(P_nksi,Gamma,DAi,dKsi)
-            sdcross = df.Sdcross(P_nksi,P_ksieta,Gamma,DAi,Eg,Ed,eta)
     
             Aq[elems[0],elems[0]] += di
             Aq[elems[1],elems[1]] += di
     
             Aq[elems[0],elems[1]] -= di
             Aq[elems[1],elems[0]] -= di
+            
+            if crossdiffusion:
+                sdcross = df.Sdcross(P_nksi,P_ksieta,Gamma,DAi,Eg,Ed,eta)
     
-            Bq[elems[0]] += sdcross
-            Bq[elems[1]] -= sdcross
+                Bq[elems[0]] += sdcross
+                Bq[elems[1]] -= sdcross
         
         for i in range(len(QuadList)):
             elem = QuadList[i]
@@ -271,34 +276,29 @@ def erreur_quadratique(Phi, Phi_ana):
         erreur += (Phi[i] - Phi_ana[i])**2
     return np.sqrt(erreur/len(Phi))
 
-#%%Calcul de la convergence du cas carré
+#%%Calcul de la convergence du cas carré sans cross diffusion
+def display_conv(mesh_objQ_grossier, mesh_objQ_fin, CL_paramsT, QuadList_grossier, QuadList_fin, GradCalculatorQ_grossier, GradCalculatorQ_fin, cross_dif) :
+    Phi_grossier = Phi(mesh_objQ_grossier, CL_paramsT, QuadList_grossier, GradCalculatorQ_grossier, cross_dif)
+    Phi_ana_grossier = Phi_ana(QuadList_grossier)
+    
+    Phi_fin = Phi(mesh_objQ_fin, CL_paramsT, QuadList_fin, GradCalculatorQ_fin, cross_dif)
+    Phi_ana_fin = Phi_ana(QuadList_fin)
+    
+    h_fin = GradCalculatorQ_fin.calculTailleMoyenne()
+    h_grossier =  GradCalculatorQ_grossier.calculTailleMoyenne()
+    
+    E_fine = erreur_quadratique(Phi_fin, Phi_ana_fin)
+    E_grossière = erreur_quadratique(Phi_grossier, Phi_ana_grossier)
+    return E_grossière, E_fine, h_grossier, h_fin
+    
+E_grossière, E_fine, h_grossier, h_fin = display_conv(mesh_objQ_grossier, mesh_objQ_fin, CL_paramsT, QuadList_grossier, QuadList_fin, GradCalculatorQ_grossier, GradCalculatorQ_fin, False)
+print("Ordre de convergence du cas carré sans cross diffusion : {} \n".format(np.log(E_grossière/E_fine)/np.log(h_grossier/h_fin)))
 
-Phi_grossier = Phi(mesh_objQ_grossier, CL_paramsT, QuadList_grossier, GradCalculatorQ_grossier)
-Phi_ana_grossier = Phi_ana(QuadList_grossier)
+E_grossière, E_fine, h_grossier, h_fin = display_conv(mesh_objT_grossier, mesh_objT_fin, CL_paramsT, TriangleList_grossier, TriangleList_fin, GradCalculatorT_grossier, GradCalculatorT_fin, False)
+print("Ordre de convergence du cas triangulaire sans cross diffusion : {} \n".format(np.log(E_grossière/E_fine)/np.log(h_grossier/h_fin)))
 
-Phi_fin = Phi(mesh_objQ_fin, CL_paramsT, QuadList_fin, GradCalculatorQ_fin)
-Phi_ana_fin = Phi_ana(QuadList_fin)
+E_grossière, E_fine, h_grossier, h_fin = display_conv(mesh_objQ_grossier, mesh_objQ_fin, CL_paramsT, QuadList_grossier, QuadList_fin, GradCalculatorQ_grossier, GradCalculatorQ_fin, True)
+print("Ordre de convergence du cas carré avec cross diffusion : {} \n".format(np.log(E_grossière/E_fine)/np.log(h_grossier/h_fin)))
 
-h_fin = GradCalculatorQ_fin.calculTailleMoyenne()
-h_grossier =  GradCalculatorQ_grossier.calculTailleMoyenne()
-
-E_fine = erreur_quadratique(Phi_fin, Phi_ana_fin)
-E_grossière = erreur_quadratique(Phi_grossier, Phi_ana_grossier)
-
-print("Ordre de convergence du cas carré : {} \n".format(np.log(E_grossière/E_fine)/np.log(h_grossier/h_fin)))
-
-#%%Calcul de la convergence du cas triangulaire
-
-Phi_grossier = Phi(mesh_objT_grossier, CL_paramsT, TriangleList_grossier, GradCalculatorT_grossier)
-Phi_ana_grossier = Phi_ana(TriangleList_grossier)
-
-Phi_fin = Phi(mesh_objT_fin, CL_paramsT, TriangleList_fin, GradCalculatorT_fin)
-Phi_ana_fin = Phi_ana(TriangleList_fin)
-
-h_fin = GradCalculatorT_fin.calculTailleMoyenne()
-h_grossier =  GradCalculatorT_grossier.calculTailleMoyenne()
-
-E_fine = erreur_quadratique(Phi_fin, Phi_ana_fin)
-E_grossière = erreur_quadratique(Phi_grossier, Phi_ana_grossier)
-
-print("Ordre de convergence du cas triangulaire : {} \n".format(np.log(E_grossière/E_fine)/np.log(h_grossier/h_fin)))
+E_grossière, E_fine, h_grossier, h_fin = display_conv(mesh_objT_grossier, mesh_objT_fin, CL_paramsT, TriangleList_grossier, TriangleList_fin, GradCalculatorT_grossier, GradCalculatorT_fin, True)
+print("Ordre de convergence du cas triangulaire avec cross diffusion : {} \n".format(np.log(E_grossière/E_fine)/np.log(h_grossier/h_fin)))
