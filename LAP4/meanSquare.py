@@ -87,6 +87,7 @@ class MeanSquare:
         -------
         None
         """
+
         
         for i in range(self.mesh_obj.get_number_of_faces()):
 
@@ -143,6 +144,8 @@ class MeanSquare:
         None
         """
 
+
+
         for i in range(self.mesh_obj.get_number_of_faces()):
 
             elem = self.mesh_obj.get_face_to_elements(i)
@@ -189,6 +192,9 @@ class MeanSquare:
         -------
         None
         """
+        for E in self.elements:
+            E.resetMatrix()
+        
         self.constructionATA()
         self.constructionB()
         for E in self.elements:

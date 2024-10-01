@@ -190,7 +190,6 @@ class CL:
         else:
             PhiA = self.CLConfig[tag][1]
         
-
         B[0] = DX*(PhiA-Eg.get_value())
         B[1] = DY*(PhiA-Eg.get_value())
 
@@ -231,14 +230,10 @@ class CL:
             
         if callable(self.CLConfig[tag][1]):
             G = self.CLConfig[tag][1](FaceCenter[0],FaceCenter[1])
-
+            GNormal = G@Normal
         else:
-            G = self.CLConfig[tag][1]
+            GNormal = self.CLConfig[tag][1]
 
-        #Calcul gradient normal à la face
-         #GNormal = G@Normal
-        #Ici je passe tjrs le gradien normal =>
-        GNormal = G
 
         B[0] = DXn*(DX*Normal[0]+DY*Normal[1])*GNormal
         B[1] = DYn*(DX*Normal[0]+DY*Normal[1])*GNormal
