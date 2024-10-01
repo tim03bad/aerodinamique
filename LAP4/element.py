@@ -133,8 +133,9 @@ class Element():
         None
 
         """
-        
+    
         self.grad = np.linalg.inv(self.ATA)@self.B
+
 
     def calculFaceCenter(self, face : int):
         """
@@ -231,6 +232,13 @@ class Element():
     def set_value(self, value):
         self.value = value
 
+    def set_grad(self, gradX,gradY):
+        self.grad = np.array([gradX,gradY])
+
+######### Resetters ################
+    def resetMatrix(self):
+        self.B = np.zeros(2)
+        self.ATA = np.zeros((2,2))
 
 ########## DEBUG ################
     def storeB(self,Bld : np.ndarray):
@@ -239,4 +247,5 @@ class Element():
     def storeA(self,Ald : np.ndarray,T : tuple):
         self.Alist.append(Ald)
         self.AListT.append(T)
+
 

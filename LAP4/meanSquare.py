@@ -12,7 +12,7 @@ from champ import Champ
 from CL import CL
 
 class MeanSquare:
-    def __init__(self,mesh_obj : Mesh,CL_parameters : dict[int,(str,any)],champ,grad):
+    def __init__(self,mesh_obj : Mesh,ElementsList: list[Element],CL_parameters : dict[int,(str,any)]):
 
         """
         Constructeur de l'objet MeanSquare
@@ -51,19 +51,11 @@ class MeanSquare:
 
         self.CL = CL(CL_parameters)
 
-        try:
-            self.champ = Champ(champ, grad)
-
-        except TypeError:
-            print("Vous devez entrer des fonctions python")
-
-
-        self.elements = [Element(self.mesh_obj, i) for i in range(self.mesh_obj.get_number_of_elements())] 
-        self.champ.set_ElementsValue(self.elements)
+        self.elements = ElementsList
 
 
 
-    def updateElements(self):
+    def updateElements(self,ElementsList: list[Element]):
         
         """
         Reconstruction des elements du maillage et réinitialisation du champ
@@ -78,10 +70,7 @@ class MeanSquare:
         """
 
         #Construction des elements
-        self.elements = [Element(self.mesh_obj, i) for i in range(self.mesh_obj.get_number_of_elements())] 
-
-        #Initialisation du champ dans les elements
-        self.champ.set_ElementsValue(self.elements)
+        self.elements = ElementsList
 
 
 
@@ -98,6 +87,7 @@ class MeanSquare:
         -------
         None
         """
+
         
         for i in range(self.mesh_obj.get_number_of_faces()):
 
@@ -154,6 +144,8 @@ class MeanSquare:
         None
         """
 
+
+
         for i in range(self.mesh_obj.get_number_of_faces()):
 
             elem = self.mesh_obj.get_face_to_elements(i)
@@ -200,6 +192,11 @@ class MeanSquare:
         -------
         None
         """
+        for E in self.elements:
+            E.resetMatrix()
+        
+        self.constructionATA()
+        self.constructionB()
         for E in self.elements:
             E.calculGRAD()
 
@@ -284,12 +281,6 @@ class MeanSquare:
     def setCL(self,CL_parameters : dict[int,(str,any)]):
         self.CL = CL(CL_parameters)
 
-    def setChamp(self, champ, grad):
-        try:
-            self.champ = Champ(champ, grad)
-
-        except TypeError:
-            print("Vous devez entrer des fonctions python")
 
 
 ######## Debug ##########
