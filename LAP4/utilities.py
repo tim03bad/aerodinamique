@@ -1,3 +1,6 @@
+from re import U
+from xmlrpc.client import boolean
+from networkx import selfloop_edges
 import numpy as np
 
 from mesh import Mesh
@@ -6,10 +9,6 @@ from element import Element
 
 class Utilities:
 
-    crossDiff = True
-
-    def __init__(self,crossDiff = True):
-        self.crossDiff = crossDiff
 
     @staticmethod
     def FaceCoordinatesCalcultion(mesh_obj: Mesh,face : int,PolyList : list[Element]):
@@ -56,11 +55,11 @@ class Utilities:
         return (1/P_nksi)*(Gamma*DAi)/dKsi
     
     @staticmethod
-    def Sdcross(P_nksi : float,P_ksieta : float,Gamma : float,DAi : float, Eg : Element, Ed : Element,eta : np.ndarray):
+    def Sdcross(P_nksi : float,P_ksieta : float,Gamma : float,DAi : float, Eg : Element, Ed : Element,eta : np.ndarray, cD=True ):
     
         Vect = (Eg.get_grad()+Ed.get_grad())/2
 
-        if Utilities.crossDiff:
+        if cD == True:
             return -Gamma*(P_ksieta/P_nksi)*(Vect@eta)*DAi
         else:
             return 0

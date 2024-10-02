@@ -19,12 +19,12 @@ Ly = 1
 
 mesh_params_Q1 = {
     'mesh_type': 'TRI',
-    'lc': 0.08
+    'lc': 0.1
 }
 
 mesh_params_Q2 = {
     'mesh_type': 'TRI',
-    'lc': 0.02
+    'lc': 0.1
 }
 
 mesher = MeshGenerator(verbose=True)
@@ -52,7 +52,7 @@ solver1.solve()
 solver1.plot()
 
 #%%
-solver2 = Solver(mesh_objQ2,Lx,Ly,0.5,1000,CL_paramsT)
+solver2 = Solver(mesh_objQ2,Lx,Ly,0.5,1000,CL_paramsT,crossDiffusion=False)
 solver2.solve()
 solver2.plot()
 
@@ -79,6 +79,12 @@ print(h1,h2)
 #%%
 OdC = np.log(E1/E2)/np.log(h1/h2)
 print("Ordre de convergence : {}".format(OdC))
+
+#%%
+print("Solver 1")
+X,T1 = solver1.coupeY(0.5)
+print("Solver 2")
+X,T2 = solver2.coupeY(0.5)
 
 #%%
 solver1._util.pause()

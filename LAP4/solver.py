@@ -1,7 +1,8 @@
+from re import M, T
 import numpy as np
 import pyvista as pv
 import pyvistaqt as pvQt
-from sympy import true
+from sympy import false, true
 
 from mesh import Mesh
 import mesh
@@ -11,6 +12,8 @@ from utilities import Utilities
 from element import Element
 from meanSquare import MeanSquare
 from dataFace import dataFace
+
+import matplotlib.pyplot as plt
 
 
 
@@ -63,7 +66,7 @@ class Solver:
             NbFaces = self._mesh.get_number_of_faces()
 
         
-            print("\n\n Iteration : {}\n\n".format(iter))
+            print(" Iteration : {}".format(iter))
 
             for i in range(NbBoundaryFaces):
                 tag = self._mesh.get_boundary_face_to_tag(i)
@@ -138,7 +141,7 @@ class Solver:
                 eta = np.array([data.Xb-data.Xa,data.Yb-data.Ya])
 
                 di = self._util.Di(P_nksi,self._Gamma,DAi,dKsi)
-                sdcross = self._util.Sdcross(P_nksi,P_ksieta,self._Gamma,DAi,Eg,Ed,eta)
+                sdcross = self._util.Sdcross(P_nksi,P_ksieta,self._Gamma,DAi,Eg,Ed,eta,self._crossDiffusion)
 
                 self._A[elems[0],elems[0]] += di
                 self._A[elems[1],elems[1]] += di
@@ -147,7 +150,7 @@ class Solver:
                 self._A[elems[1],elems[0]] -= di
 
                 self._B[elems[0]] += sdcross
-                self._B[elems[1]] += sdcross
+                self._B[elems[1]] -= sdcross
 
             #Résolution matrice plein
             Phi = np.linalg.solve(self._A,self._B)
@@ -179,10 +182,8 @@ class Solver:
         pl.show_grid()
         pl.show()
 
-        #pause du programme
-        self._util.pause()
-
     def errorQuadratique(self):
+        
         error = 0
         for elem in self._PolyList:
             Coord = elem.get_Coord()
@@ -202,17 +203,64 @@ class Solver:
 
     def coupeY(self,Y:float):
         
+        X = []
+        T = []
+
         for elem in self._PolyList:
 
             Nodes = self._mesh.get_element_to_nodes(elem.index)
 
-            NodesCoords = np.array((len(Nodes),2))
+            diffList = []
+            for node in Nodes:
+                NodeCoord = elem.nodesCoord[node]
+                
+                diffList.append(NodeCoord[1]-Y)
 
-            for node_i in range(len(Nodes)):
-                NodesCoords[node_i,0] = self._mesh.get_node_to_xcoord(Nodes[node_i])
-                NodesCoords[node_i,1] = self._mesh.get_node_to_ycoord(Nodes[node_i])
+            if min(diffList) <= 0 and max(diffList) > 0:
 
-            print(NodesCoords)
+                X.append(elem.get_Coord()[0])
+                T.append(elem.get_value())
+        
+        X = np.array(X)
+        T = np.array(T)
+
+        indice_tri = np.argsort(X)
+
+        X = X[indice_tri]
+        T = T[indice_tri]
+    
+        return X,T
+    
+    def coupeX(self,X:float):
+        Y=[]
+        T=[]
+
+        for elem in self._PolyList:
+
+            Nodes = self._mesh.get_element_to_nodes(elem.index)
+
+            diffList = []
+            for node in Nodes:
+                NodeCoord = elem.nodesCoord[node]
+                
+                diffList.append(NodeCoord[0]-X)
+
+            if min(diffList) <= 0 and max(diffList) > 0:
+
+                Y.append(elem.get_Coord()[1])
+                T.append(elem.get_value())
+        
+        Y = np.array(Y)
+        T = np.array(T)
+
+        indice_tri = np.argsort(Y)
+
+        Y = Y[indice_tri]
+        T = T[indice_tri]
+
+        return Y,T
+
+
             
 
 
