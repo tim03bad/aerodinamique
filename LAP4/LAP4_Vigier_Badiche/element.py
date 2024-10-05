@@ -133,8 +133,9 @@ class Element():
         None
 
         """
-        
+    
         self.grad = np.linalg.inv(self.ATA)@self.B
+
 
     def calculFaceCenter(self, face : int):
         """
@@ -192,27 +193,24 @@ class Element():
     
     def __private_Center(self):
 
-        # #construction du vecteur des noeuds
+        #construction du vecteur des noeuds
         nodes = np.zeros((len(self.nodes),2))
 
         for i in range(len(self.nodes)):
             nodes[i] = self.nodesCoord[self.nodes[i]]
         
-        # nodes_closed = np.vstack([nodes, nodes[0]])
+        nodes_closed = np.vstack([nodes, nodes[0]])
         
-        # #Aire avec la formule du determinant
-        # A = 0.5 * np.sum(nodes_closed[:-1, 0] * nodes_closed[1:, 1] - nodes_closed[1:, 0] * nodes_closed[:-1, 1])
+        #Aire avec la formule du determinant
+        A = 0.5 * np.sum(nodes_closed[:-1, 0] * nodes_closed[1:, 1] - nodes_closed[1:, 0] * nodes_closed[:-1, 1])
 
-        # C_x = np.sum((nodes_closed[:-1,0] + nodes_closed[1:,0]) * 
-        #              (nodes_closed[:-1,0] * nodes_closed[1:,1] - nodes_closed[1:,0]*nodes_closed[:-1,1])) / (6*A)
+        C_x = np.sum((nodes_closed[:-1,0] + nodes_closed[1:,0]) * 
+                     (nodes_closed[:-1,0] * nodes_closed[1:,1] - nodes_closed[1:,0]*nodes_closed[:-1,1])) / (6*A)
 
-        # C_y = np.sum((nodes_closed[:-1, 1] + nodes_closed[1:, 1]) * 
-        #          (nodes_closed[:-1, 0] * nodes_closed[1:, 1] - nodes_closed[1:, 0] * nodes_closed[:-1, 1])) / (6 * A)
+        C_y = np.sum((nodes_closed[:-1, 1] + nodes_closed[1:, 1]) * 
+                 (nodes_closed[:-1, 0] * nodes_closed[1:, 1] - nodes_closed[1:, 0] * nodes_closed[:-1, 1])) / (6 * A)
         
-        # return np.array([C_x,C_y])
-
-        return np.mean(nodes, axis=0) #Centre de gravité de l'élément
-
+        return np.array([C_x,C_y])
     
 ########### GETTERS ################
     def get_Coord(self):
@@ -234,6 +232,13 @@ class Element():
     def set_value(self, value):
         self.value = value
 
+    def set_grad(self, gradX,gradY):
+        self.grad = np.array([gradX,gradY])
+
+######### Resetters ################
+    def resetMatrix(self):
+        self.B = np.zeros(2)
+        self.ATA = np.zeros((2,2))
 
 ########## DEBUG ################
     def storeB(self,Bld : np.ndarray):
@@ -242,4 +247,5 @@ class Element():
     def storeA(self,Ald : np.ndarray,T : tuple):
         self.Alist.append(Ald)
         self.AListT.append(T)
+
 

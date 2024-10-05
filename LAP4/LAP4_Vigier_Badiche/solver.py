@@ -14,6 +14,8 @@ from meanSquare import MeanSquare
 from dataFace import dataFace
 
 import matplotlib.pyplot as plt
+from scipy.sparse import csr_matrix
+from scipy.sparse.linalg import spsolve
 
 
 
@@ -153,7 +155,12 @@ class Solver:
                 self._B[elems[1]] -= sdcross
 
             #Résolution matrice plein
-            Phi = np.linalg.solve(self._A,self._B)
+            if len(self._PolyList) <= 500:
+                Phi = np.linalg.solve(self._A,self._B)
+            else:
+                print("Solving with sparse matrix")
+                Asparse = self.convert_to_csr(self._A)
+                Phi = spsolve(Asparse,self._B)
 
             #Mise à jour des éléments du maillage avec Phi
             for i in range(self._mesh.number_of_elements):
@@ -188,6 +195,7 @@ class Solver:
         for elem in self._PolyList:
             Coord = elem.get_Coord()
             error += elem.get_Area()*(self._SolAnalytique(Coord[0],Coord[1]) - elem.get_value())**2
+            print((self._SolAnalytique(Coord[0],Coord[1]) - elem.get_value())**2)
 
         return np.sqrt(error/(self._Lx*self._Ly))
     
@@ -259,6 +267,35 @@ class Solver:
         T = T[indice_tri]
 
         return Y,T
+
+    @staticmethod
+    def convert_to_csr(A : np.ndarray):
+    # Initialiser les tableaux CSR
+        data = []
+        indices = []
+        indptr = [0]  # Commence à 0, marque le début de la première ligne
+
+        # Taille de la matrice
+        n_rows, n_cols = A.shape
+
+        # Parcourir chaque ligne de la matrice
+        for i in range(n_rows):
+            for j in range(n_cols):
+                if A[i, j] != 0:  # Si la valeur n'est pas nulle
+                    data.append(A[i, j])   # Ajouter la valeur non nulle à 'data'
+                    indices.append(j)      # Ajouter l'indice de la colonne à 'indices'
+            indptr.append(len(data))  # Ajouter la position actuelle dans 'data'
+
+        # Convertir les listes en tableaux numpy
+        data = np.array(data)
+        indices = np.array(indices)
+        indptr = np.array(indptr)
+
+        print('Length of data:', len(data))
+        print('Length of indices:', len(indices))
+        print('Length of indptr:', len(indptr))
+
+        return csr_matrix((data, indices, indptr), shape=A.shape)
 
 
             

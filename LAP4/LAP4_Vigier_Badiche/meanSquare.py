@@ -197,7 +197,7 @@ class MeanSquare:
         """
         listOfArea = np.array([E.get_Area() for E in self.elements])
 
-        return np.sqrt(np.sum(listOfArea**2)/len(listOfArea))
+        return np.sqrt(np.sum(listOfArea)/len(listOfArea))
 
 
 
