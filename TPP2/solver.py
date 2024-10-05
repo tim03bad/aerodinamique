@@ -285,8 +285,21 @@ class Solver:
             #Calcul du nouveau gradient du champs
             self._MS.calculMeanSquare()
 
-    def plot(self):
+    def plot(self,show_Mesh : bool = True,contour : bool = False):
+
+        #Param d'affichage
+        colorbar_args = {
+            "title": "Champs T",  # Titre de la colorbar
+            "vertical": True,  # Colorbar verticale
+            "position_x": 0.05,  # Position horizontale de la colorbar (proche du bord gauche)
+            "position_y": 0.1,   # Position verticale, centrée
+            "width": 0.05,       # Largeur de la colorbar
+            "height": 0.8        # Hauteur de la colorbar
+        }
+
+
         #Retrieving values for plotting
+
         Values = np.zeros(len(self._PolyList))
 
         for i in range(len(self._PolyList)):
@@ -299,9 +312,19 @@ class Solver:
         pv_mesh['Champ T'] = Values  
 
         pl = pvQt.BackgroundPlotter()
-        pl.add_mesh(pv_mesh, scalars='Champ T', show_edges=True, cmap='hot')
+        pl.add_mesh(pv_mesh, scalars='Champ T', show_edges=show_Mesh, cmap='hot',scalar_bar_args=colorbar_args)
+
+        #Ajout des ligne de contour iso
+        if contour:
+            nodes_xcoords = self._mesh.get_nodes_to_xcoord()
+            nodes_ycoords = self._mesh.get_nodes_to_ycoord()
+            pv_mesh = pv_mesh.cell_data_to_point_data()
+            contours = pv_mesh.contour(isosurfaces=15,scalars='Champ T')
+            pl.add_mesh(contours,color='k',show_scalar_bar=False,line_width=2)
+
 
         pl.camera_position = 'xy'
+        pl.add_text('Champ scalaire T', position="upper_edge")
         pl.show_grid()
         pl.show()
 

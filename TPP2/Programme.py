@@ -86,6 +86,7 @@ CL_params = {
 solver = Solver(mesh_obj,2,2,k,fS,rho,Cp,CL_params,velocityField,'upwind')
 solver.solve()
 Value = solver.plot()
+solver.plot(False,True)
 
 # %%
 import pyvista as pv
@@ -108,10 +109,10 @@ for i_element in range(mesh_obj.get_number_of_elements()):
 
 
 
-pv_mesh['Champ T'] = fT(cell_centers[:, 0], cell_centers[:, 1])-Value
+pv_mesh['Erreur T'] = fT(cell_centers[:, 0], cell_centers[:, 1])-Value
 
 pl = pvQt.BackgroundPlotter()
-pl.add_mesh(pv_mesh, scalars='Champ T', show_edges=True, cmap='hot')
+pl.add_mesh(pv_mesh, scalars='Erreur T', show_edges=True, cmap='hot')
 
 pl.camera_position = 'xy'
 pl.show_grid()
