@@ -11,6 +11,7 @@ from meanSquare import MeanSquare
 from element import Element
 
 from solver import Solver
+import matplotlib.pyplot as plt
 
 #%% Geométrie du maillage et donnée
 
@@ -49,12 +50,12 @@ CL_paramsT = {
 #%%
 solver1 = Solver(mesh_objQ1,Lx,Ly,0.5,1000,CL_paramsT)
 solver1.solve()
-solver1.plot()
+#solver1.plot()
 
 #%%
 solver2 = Solver(mesh_objQ2,Lx,Ly,0.5,1000,CL_paramsT)
 solver2.solve()
-solver2.plot()
+#solver2.plot()
 
 #%%
 Gamma = 0.5
@@ -82,3 +83,20 @@ print("Ordre de convergence : {}".format(OdC))
 
 #%%
 solver1._util.pause()
+X, phi = solver1.coupeY(0.5)
+
+# Combiner les deux listes en une liste de tuples (abscisse, ordonnée)
+couples = list(zip(X, phi))
+
+# Trier la liste de tuples en fonction des valeurs d'abscisses (le premier élément de chaque tuple)
+couples_tries = sorted(couples, key=lambda x: x[0])
+
+# Séparer les abscisses et ordonnées triées
+X_tries, phi_tries = zip(*couples_tries)
+
+# Convertir en liste si nécessaire
+abscisses_tries = list(X_tries)
+ordonnees_tries = list(phi_tries)
+
+plt.plot(abscisses_tries, ordonnees_tries)
+plt.show()

@@ -201,18 +201,26 @@ class Solver:
         return self._MS.calculTailleMoyenne()
 
     def coupeY(self,Y:float):
-        
+        inside_elem = []
         for elem in self._PolyList:
 
             Nodes = self._mesh.get_element_to_nodes(elem.index)
-
-            NodesCoords = np.array((len(Nodes),2))
-
+            miny, maxy = self._mesh.get_node_to_ycoord(Nodes[0]), self._mesh.get_node_to_ycoord(Nodes[0])
             for node_i in range(len(Nodes)):
-                NodesCoords[node_i,0] = self._mesh.get_node_to_xcoord(Nodes[node_i])
-                NodesCoords[node_i,1] = self._mesh.get_node_to_ycoord(Nodes[node_i])
-
-            print(NodesCoords)
+                y = self._mesh.get_node_to_ycoord(Nodes[node_i])
+                if y < miny:
+                    miny = y
+                if y > maxy:
+                    maxy = y
+            if Y >= miny and Y <= maxy:
+                inside_elem.append(elem)
+        
+        X, phi = [], []
+        for elem in inside_elem:
+            X.append(elem.get_Coord()[0])
+            phi.append(elem.get_value())
+        return X, phi
+    
             
 
 
