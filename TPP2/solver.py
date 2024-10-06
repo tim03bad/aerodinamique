@@ -75,7 +75,7 @@ class Solver:
 
 
 
-    def solve(self,iteration : int = 5):
+    def solve(self,iteration : int = 1):
 
         for iter in range(1,iteration+1):
 
@@ -108,6 +108,7 @@ class Solver:
 
                 else:
                     self._B[i] += self._S*E.get_Area()
+                
                 
 
             NbBoundaryFaces = self._mesh.get_number_of_boundary_faces()
@@ -177,12 +178,17 @@ class Solver:
                     self._A[elems[0],elems[0]] += di
                     self._B[elems[0]] += sdcross + di*PhiD
 
+                    if Eg.index == 44:
+                        print(di*PhiD)
+                        print(di)
+                        print(PhiD)
+                        print(FaceCenter)
+
 
                     ################ Convection ################
                     #CL => upwind et central meme traitement
                     self._A[elems[0],elems[0]] += np.max([0,F])*self._Cp
                     self._B[elems[0]] += np.max([0,-F])*self._Cp*PhiD
-
                     
                     
 
@@ -191,22 +197,29 @@ class Solver:
                     if callable(self._CL[tag][1]):
                         fGPhi = self._CL[tag][1] #gradient imposé
                         GPhi = fGPhi(FaceCenter[0],FaceCenter[1])
+                        GPhiN = GPhi@FaceNormal
                     else:
-                        GPhi = self._CL[tag][1]
+                        GPhiN = self._CL[tag][1]
 
                     #print("Face : {}N, Phi={}".format(i,self._CL[tag][1]))
-                    self._B[elems[0]] += self._Gamma*GPhi*DAi
-
+                    self._B[elems[0]] += self._Gamma*GPhiN*DAi
+                    if Eg.index == 44:
+        
+                        print(GPhiN)
+                        print(self._Gamma*GPhiN*DAi)
+                        print(FaceNormal)
+                        print(FaceCenter)
                     ###### Convection ######
 
                     Eta = FaceCenter - Eg.ElementCoord
+                    EtaN = Eta/np.linalg.norm(Eta)
 
                     #CL => upwind et central meme traitement
                     self._A[elems[0],elems[0]] += F*self._Cp
-                    self._B[elems[0]] -= F*GPhi*(Eta@FaceNormal)*self._Cp
+                    self._B[elems[0]] = self._B[elems[0]] + self._Gamma*GPhiN*DAi - F*GPhiN*(Eta@FaceNormal)*self._Cp
 
 
-
+            #print("\n\n#####\n\nMatrice B av : {}".format(self._B))
 
             # Calcul hors fontières limites, uniquement face interne
 
@@ -268,12 +281,13 @@ class Solver:
                     self._A[elems[0],elems[1]] -= np.max([0,-Fi])*self._Cp
                     self._A[elems[1],elems[0]] -= np.max([0,Fi])*self._Cp
 
-
-
+            #print("\n\n#####\n\nMatrice B aP : {}".format(self._B))
+            
             #Résolution matrice plein
             if len(self._PolyList) <= 500:
                 Phi = np.linalg.solve(self._A,self._B)
             else:
+                
                 print("Solving with sparse matrix")
                 Asparse = self.convert_to_csr(self._A)
                 Phi = spsolve(Asparse,self._B)
@@ -285,7 +299,7 @@ class Solver:
             #Calcul du nouveau gradient du champs
             self._MS.calculMeanSquare()
 
-    def plot(self,show_Mesh : bool = True,contour : bool = False):
+    def plot(self,title:str,show_Mesh : bool = True,contour : bool = False):
 
         #Param d'affichage
         colorbar_args = {
@@ -324,7 +338,7 @@ class Solver:
 
 
         pl.camera_position = 'xy'
-        pl.add_text('Champ scalaire T', position="upper_edge")
+        pl.add_text(title, position="upper_edge")
         pl.show_grid()
         pl.show()
 

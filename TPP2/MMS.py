@@ -1,4 +1,5 @@
 #%%
+from re import T
 import sympy as sp
 import numpy as np
 
@@ -9,12 +10,17 @@ x, y = sp.symbols('x y')
 #%%
 u = (2*x**2 - x**4 -1)*(y-y**3)
 v = -(2*y**2 - y**4 -1)*(x-x**3)
+fu = sp.lambdify((x, y), u, 'numpy')
+fv = sp.lambdify((x, y), v, 'numpy')
 
 #%%
 T0 = 400
 Tx = 50
 Txy = 100
 Tmms = T0 + Tx*sp.cos(sp.pi*x) + Txy*sp.sin(sp.pi*x*y)
+TmmsGrad = [sp.diff(Tmms, x), sp.diff(Tmms, y)]
+
+fTGrad = sp.lambdify((x, y), TmmsGrad, 'numpy')
 
 
 #%%
@@ -45,7 +51,7 @@ Xi, Yi = np.meshgrid(xi, yi)
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
-ax.plot_surface(Xi, Yi, fT(Xi, Yi), cmap='viridis')
+ax.plot_surface(Xi, Yi, fv(Xi, Yi), cmap='viridis')
 plt.show()
 
 # %%

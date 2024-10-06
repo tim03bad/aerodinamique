@@ -27,6 +27,7 @@ class CL:
         """
 
         self.CLConfig = parameters
+        print(self.CLConfig)
     
     def calculCL_ATA(self,tag : int,face : int,Eg : Element)->np.ndarray:
         
@@ -50,10 +51,12 @@ class CL:
         
         if self.CLConfig[tag][0] == "D": #Dirichlet
 
+        
             return self.__private_Dirichlet_ATA(face,Eg)
         
         elif self.CLConfig[tag][0] == "N": #Neumann
 
+        
             return self.__private_Neumann_ATA(face,Eg)
         
         else: #Libre
@@ -80,13 +83,17 @@ class CL:
             Contribution de la condition au bord dans le second membre.
         """
         if self.CLConfig[tag][0] == "D": #Dirichlet
+            
             return self.__private_Dirichlet_B(tag,face,Eg)
 
         elif self.CLConfig[tag][0] == "N": #Neumann
+            
             return self.__private_Neumann_B(tag,face,Eg)
 
         else: #Libre
+        
             return np.zeros(2)
+
     
     def __private_Dirichlet_ATA(self,face:int,Eg:Element)->np.ndarray:
 

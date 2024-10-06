@@ -1,9 +1,9 @@
-from re import U
-from xmlrpc.client import boolean
-from networkx import selfloop_edges
 import numpy as np
+import pyvista as pv
+import pyvistaqt as pvQt
 
 from mesh import Mesh
+from meshPlotter import MeshPlotter
 from dataFace import dataFace
 from element import Element
 
@@ -166,3 +166,84 @@ class Utilities:
     @staticmethod
     def pause():
         input("Appuyer sur une touche pour continuer...")
+
+    @staticmethod
+    def plot(mesh,fct,title:str,show_Mesh : bool = True,contour : bool = False):
+
+        #Param d'affichage
+        colorbar_args = {
+            "title": "Champ T(K)",  # Titre de la colorbar
+            "vertical": True,  # Colorbar verticale
+            "position_x": 0.05,  # Position horizontale de la colorbar (proche du bord gauche)
+            "position_y": 0.1,   # Position verticale, centrée
+            "width": 0.05,       # Largeur de la colorbar
+            "height": 0.8        # Hauteur de la colorbar
+        }
+
+        plotter = MeshPlotter()
+        nodes,elements = plotter.prepare_data_for_pyvista(mesh)
+        pv_mesh = pv.PolyData(nodes, elements)
+
+        cell_centers = np.zeros((mesh.get_number_of_elements(), 2))
+        for i_element in range(mesh.get_number_of_elements()):
+            center_coords = np.array([0.0, 0.0])
+            nodes = mesh.get_element_to_nodes(i_element)
+            for node in nodes:
+                center_coords[0] += mesh.get_node_to_xcoord(node)
+                center_coords[1] += mesh.get_node_to_ycoord(node)
+            center_coords /= nodes.shape[0]
+            cell_centers[i_element, :] = center_coords
+
+
+        pv_mesh['Champs T (analytique)'] = fct(cell_centers[:, 0], cell_centers[:, 1])
+
+        pl = pvQt.BackgroundPlotter()
+        pl.add_mesh(pv_mesh, scalars='Champs T (analytique)', show_edges=show_Mesh, cmap='hot',scalar_bar_args=colorbar_args)
+        if contour:
+                nodes_xcoords = mesh.get_nodes_to_xcoord()
+                nodes_ycoords = mesh.get_nodes_to_ycoord()
+                pv_mesh = pv_mesh.cell_data_to_point_data()
+                contours = pv_mesh.contour(isosurfaces=15,scalars='Champs T (analytique)')
+                pl.add_mesh(contours,color='k',show_scalar_bar=False,line_width=2)
+
+        pl.camera_position = 'xy'
+        pl.show_grid()
+        pl.add_text(title, position="upper_edge")
+        pl.show()
+
+    @staticmethod
+    def plotError(mesh,fctAnalytique,Values: np.ndarray,title:str,show_Mesh : bool = True):
+
+     #Param d'affichage
+        colorbar_args = {
+            "title": "Champ T(K)",  # Titre de la colorbar
+            "vertical": True,  # Colorbar verticale
+            "position_x": 0.05,  # Position horizontale de la colorbar (proche du bord gauche)
+            "position_y": 0.1,   # Position verticale, centrée
+            "width": 0.05,       # Largeur de la colorbar
+            "height": 0.8        # Hauteur de la colorbar
+        }
+
+        plotter = MeshPlotter()
+        nodes,elements = plotter.prepare_data_for_pyvista(mesh)
+        pv_mesh = pv.PolyData(nodes, elements)
+
+        cell_centers = np.zeros((mesh.get_number_of_elements(), 2))
+        for i_element in range(mesh.get_number_of_elements()):
+            center_coords = np.array([0.0, 0.0])
+            nodes = mesh.get_element_to_nodes(i_element)
+            for node in nodes:
+                center_coords[0] += mesh.get_node_to_xcoord(node)
+                center_coords[1] += mesh.get_node_to_ycoord(node)
+            center_coords /= nodes.shape[0]
+            cell_centers[i_element, :] = center_coords
+
+
+        pv_mesh['Champs T (analytique)'] = fctAnalytique(cell_centers[:, 0], cell_centers[:, 1]) - Values
+
+        pl = pvQt.BackgroundPlotter()
+        pl.add_mesh(pv_mesh, scalars='Champs T (analytique)', show_edges=show_Mesh, cmap='hot',scalar_bar_args=colorbar_args)
+        pl.camera_position = 'xy'
+        pl.show_grid()
+        pl.add_text(title, position="upper_edge")
+        pl.show()

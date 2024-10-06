@@ -13,15 +13,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from mesh import Mesh
+
 from meshConnectivity import MeshConnectivity
 from meshGenerator import MeshGenerator
 
 from meshPlotter import MeshPlotter
 from solver import Solver
-import solver
+from utilities import Utilities
 
 
-
+import pyvista as pv
+import pyvistaqt as pvQt
 
 #%%Parametre physique
 rho = 1
@@ -49,6 +51,14 @@ Tx = 50
 Txy = 100
 Tmms = T0 + Tx*sp.cos(sp.pi*x) + Txy*sp.sin(sp.pi*x*y)
 
+Tmms_x = sp.diff(Tmms, x)
+Tmms_y = sp.diff(Tmms, y)
+fTx = sp.lambdify((x, y), Tmms_x, 'numpy')
+fTy = sp.lambdify((x, y), Tmms_y, 'numpy')
+
+def fTGrad(x,y):
+    return np.array([fTx(x,y),fTy(x,y)])
+
 #Derivées
 uTmms_x = sp.diff(Tmms*u, x)
 vTmms_y = sp.diff(Tmms*v, y)
@@ -67,7 +77,7 @@ fS = sp.lambdify((x, y), S, 'numpy')
 #%% Meshing
 mesh_params = {
     'mesh_type': 'TRI',
-    'lc': 0.08
+    'lc': 0.1
 }
 
 mesher = MeshGenerator(verbose=True)
@@ -75,45 +85,40 @@ mesh_obj = mesher.rectangle([-1, 1, -1, 1], mesh_params)
 conec = MeshConnectivity(mesh_obj)
 conec.compute_connectivity()
 
-CL_params = {
+CL_params_1 = { #Pure Dirichlet 
     0:('D',fT),
     1:('D',fT),
     2:('D',fT),
     3:('D',fT),
+    
+}
+
+CL_params_2 = { #Mix Dirichlet et Neumann
+    0:('D',fT),
+    1:('N',fTGrad),
+    2:('D',fT),
+    3:('N',fTGrad),
 }
 
 #%% Solver
-solver = Solver(mesh_obj,2,2,k,fS,rho,Cp,CL_params,velocityField,'upwind')
-solver.solve()
-Value = solver.plot()
-solver.plot(False,True)
+
+#Dirichlet
+solver1 = Solver(mesh_obj,2,2,k,fS,rho,Cp,CL_params_1,velocityField,'upwind')
+solver1.solve()
+Value1 = solver1.plot("T Dirichlet")
+
+
+#Neumann+Dirichlet
+solver2 = Solver(mesh_obj,2,2,k,fS,rho,Cp,CL_params_2,velocityField,'upwind')
+solver2.solve()
+Value2 = solver2.plot("T Neumann+Dirichlet")
+
+
+#%%
+Utilities.plot(mesh_obj,fT,"T analytique",True,True)
+#%%
+Utilities.plotError(mesh_obj,fT,Value2,"Erreur T-T2",True)
+
 
 # %%
-import pyvista as pv
-import pyvistaqt as pvQt
-from meshPlotter import MeshPlotter
-
-plotter = MeshPlotter()
-nodes,elements = plotter.prepare_data_for_pyvista(mesh_obj)
-pv_mesh = pv.PolyData(nodes, elements)
-
-cell_centers = np.zeros((mesh_obj.get_number_of_elements(), 2))
-for i_element in range(mesh_obj.get_number_of_elements()):
-    center_coords = np.array([0.0, 0.0])
-    nodes = mesh_obj.get_element_to_nodes(i_element)
-    for node in nodes:
-        center_coords[0] += mesh_obj.get_node_to_xcoord(node)
-        center_coords[1] += mesh_obj.get_node_to_ycoord(node)
-    center_coords /= nodes.shape[0]
-    cell_centers[i_element, :] = center_coords
-
-
-
-pv_mesh['Erreur T'] = fT(cell_centers[:, 0], cell_centers[:, 1])-Value
-
-pl = pvQt.BackgroundPlotter()
-pl.add_mesh(pv_mesh, scalars='Erreur T', show_edges=True, cmap='hot')
-
-pl.camera_position = 'xy'
-pl.show_grid()
-pl.show()
+Utilities.pause()
