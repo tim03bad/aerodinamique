@@ -10,6 +10,8 @@ from meshPlotter import MeshPlotter
 from meanSquare import MeanSquare
 from element import Element
 
+
+
 from solver import Solver
 import matplotlib.pyplot as plt
 
@@ -64,8 +66,8 @@ CL_paramsT = {
 
 #%%
 solver1 = Solver(mesh_objQ1,Lx,Ly,Gamma,q,rho,Cp,CL_paramsT,velocityField,'upwind')
-solver1.solve()
-solver1.plot()
+solver1.solve(5)
+solver1.plot("Solver 1 T")
 
 #%%
 solver2 = Solver(mesh_objQ2,Lx,Ly,0.5,1000,CL_paramsT)
@@ -94,12 +96,12 @@ print("Ordre de convergence : {}".format(OdC))
 
 #%%
 print("Solver 1")
-X1,T1 = solver1.coupeY(0.5)
-plt.plot(X1,T1)
-plt.grid()
+solver1.coupeY(0.5,False)
+solver1.coupeX(0.5,False)
+
 #%%
 print("Solver 2")
-X2,T2 = solver2.coupeY(0.5)
+solver2.coupeY(0.5)
 
 #%%
 solver1._util.pause()
