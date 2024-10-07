@@ -8,7 +8,6 @@ from meshPlotter import MeshPlotter
 
 
 from element import Element
-from champ import Champ
 from CL import CL
 
 class MeanSquare:
@@ -51,25 +50,6 @@ class MeanSquare:
 
         self.CL = CL(CL_parameters)
 
-        self.elements = ElementsList
-
-
-
-    def updateElements(self,ElementsList: list[Element]):
-        
-        """
-        Reconstruction des elements du maillage et réinitialisation du champ
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
-        """
-
-        #Construction des elements
         self.elements = ElementsList
 
 
@@ -218,99 +198,26 @@ class MeanSquare:
         listOfArea = np.array([E.get_Area() for E in self.elements])
 
         return np.sqrt(np.sum(listOfArea**2)/len(listOfArea))
-    
-    def errorQuadratique(self):
-        
+
+
+
+###############################
+    def getElement(self,index):
         """
-        Calcul de l'erreur entre le gradient numérique et analytique
-        
-        Parameters
-        ----------
-        None
-        
-        Returns
-        -------
-        float
-            Erreur entre le gradient numérique et analytique.
-        """
-       
-        NormsN = np.array([E.getGradNorm() for E in self.elements])
-        NormsA = np.array([np.linalg.norm(self.champ.grad(E.get_Coord()[0], E.get_Coord()[1])) for E in self.elements])
-        AreaL = np.array([E.get_Area() for E in self.elements])
-
-
-        return np.sqrt(np.sum((AreaL*(NormsA-NormsN)**2)))
-
-
-########## Getters ##########
-
-    def getElement(self,index : int):
-        """
-        Retourne l'objet Element d'index donné.
+        Retourne l'élément d'index donné.
         
         Parameters
         ----------
         index : int
-            Index de l'élément à retourner
-            
+            Index de l'élément.
+        
         Returns
         -------
         Element
-            Objet Element d'index donné
+            L'élément d'index donné.
+        
+        Notes
+        -----
+        None
         """
         return self.elements[index]
-    
-    def getGradient(self):
-        """
-        Retourne la liste des gradients numériques pour chaque élément.
-        
-        Parameters
-        ----------
-        None
-        
-        Returns
-        -------
-        list[ndarray]
-            Liste des gradients numériques pour chaque élément.
-        """
-        return np.array([E.get_grad() for E in self.elements])
-    
-
-########## Setters ##########
-    
-    def setCL(self,CL_parameters : dict[int,(str,any)]):
-        self.CL = CL(CL_parameters)
-
-
-
-######## Debug ##########
-
-
-    def debug(self):
-        gradAnal = []
-        gradNum = []
-
-        for E in self.elements:
-            gradNum.append(E.get_grad())
-            Coordinate = E.get_Coord()
-            print("Coord E{} : {} | Value : {}".format(E.index,Coordinate,E.get_value()))
-            gradAnal.append(self.champ.grad(Coordinate[0], Coordinate[1]))
-
-        print("Ei : Analytique | Numerique")
-        for i in range(len(gradAnal)):
-            print("E{} : {} | {}".format(i,gradAnal[i],gradNum[i]))
-
-        NormsN = np.array([E.getGradNorm() for E in self.elements])
-        NormsA = np.array([np.linalg.norm(self.champ.grad(E.get_Coord()[0], E.get_Coord()[1])) for E in self.elements])
-        print("##################################### \n\n")
-        print("Ei : |gradA| | |gradN| | Delta")
-        for i in range(len(NormsN)):
-            print("E{} : {:.4f} | {:.4f} | Delta : {:.4f}".format(i,NormsA[i],NormsN[i],NormsA[i]-NormsN[i]))
-        
-
-
-
-        
-    def plot(self):
-            plotter = MeshPlotter()
-            plotter.plot_mesh(self.mesh_obj, label_points=True, label_elements=True, label_faces=True)

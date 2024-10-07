@@ -192,24 +192,27 @@ class Element():
     
     def __private_Center(self):
 
-        #construction du vecteur des noeuds
+        # #construction du vecteur des noeuds
         nodes = np.zeros((len(self.nodes),2))
 
         for i in range(len(self.nodes)):
             nodes[i] = self.nodesCoord[self.nodes[i]]
         
-        nodes_closed = np.vstack([nodes, nodes[0]])
+        # nodes_closed = np.vstack([nodes, nodes[0]])
         
-        #Aire avec la formule du determinant
-        A = 0.5 * np.sum(nodes_closed[:-1, 0] * nodes_closed[1:, 1] - nodes_closed[1:, 0] * nodes_closed[:-1, 1])
+        # #Aire avec la formule du determinant
+        # A = 0.5 * np.sum(nodes_closed[:-1, 0] * nodes_closed[1:, 1] - nodes_closed[1:, 0] * nodes_closed[:-1, 1])
 
-        C_x = np.sum((nodes_closed[:-1,0] + nodes_closed[1:,0]) * 
-                     (nodes_closed[:-1,0] * nodes_closed[1:,1] - nodes_closed[1:,0]*nodes_closed[:-1,1])) / (6*A)
+        # C_x = np.sum((nodes_closed[:-1,0] + nodes_closed[1:,0]) * 
+        #              (nodes_closed[:-1,0] * nodes_closed[1:,1] - nodes_closed[1:,0]*nodes_closed[:-1,1])) / (6*A)
 
-        C_y = np.sum((nodes_closed[:-1, 1] + nodes_closed[1:, 1]) * 
-                 (nodes_closed[:-1, 0] * nodes_closed[1:, 1] - nodes_closed[1:, 0] * nodes_closed[:-1, 1])) / (6 * A)
+        # C_y = np.sum((nodes_closed[:-1, 1] + nodes_closed[1:, 1]) * 
+        #          (nodes_closed[:-1, 0] * nodes_closed[1:, 1] - nodes_closed[1:, 0] * nodes_closed[:-1, 1])) / (6 * A)
         
-        return np.array([C_x,C_y])
+        # return np.array([C_x,C_y])
+
+        return np.mean(nodes, axis=0) #Centre de gravité de l'élément
+
     
 ########### GETTERS ################
     def get_Coord(self):

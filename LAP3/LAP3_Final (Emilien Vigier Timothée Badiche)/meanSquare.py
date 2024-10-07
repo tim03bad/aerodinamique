@@ -220,7 +220,7 @@ class MeanSquare:
         """
         listOfArea = np.array([E.get_Area() for E in self.elements])
 
-        return np.sqrt(np.sum(listOfArea**2)/len(listOfArea))
+        return np.sqrt(np.sum(listOfArea)/len(listOfArea))
     
     def errorQuadratique(self):
         
@@ -242,7 +242,7 @@ class MeanSquare:
         AreaL = np.array([E.get_Area() for E in self.elements])
 
 
-        return np.sqrt(np.sum((AreaL*(NormsA-NormsN)**2)))
+        return np.sqrt(np.sum((NormsA-NormsN)**2)/self.mesh_obj.get_number_of_elements())
 
 
 ########## Getters ##########

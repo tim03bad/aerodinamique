@@ -8,11 +8,11 @@ from mesh import Mesh
 
 #%%
 def fct(x,y):
-    return 2*x + 3*y
+    return x**2 + y**2
 
 def grad(x,y):
 
-    return np.array([2,3])
+    return np.array([2*x,2*y])
 
 #%%
 param = {0: ('D', fct),1:('D',fct),2:('D',fct),3:('D',fct)}
@@ -29,7 +29,7 @@ h2 = 0
 
 
 #%% Mesh 1
-mesh_parameters1 = {'mesh_type': 'TRI','lc':0.5}
+mesh_parameters1 = {'mesh_type': 'TRI','lc':0.1}
 mesher = MeshGenerator()
 mesh_obj = mesher.rectangle([0.0, 1.0, 0.0, 1.0], mesh_parameters1)
 conec = MeshConnectivity(mesh_obj)
@@ -49,7 +49,7 @@ print("Error 1 : ",E1)
 
 
 #%% Mesh 2
-mesh_parameters2 = {'mesh_type': 'TRI','lc':0.08}
+mesh_parameters2 = {'mesh_type': 'TRI','lc':0.05}
 mesh_obj2 = mesher.rectangle([0.0, 1.0, 0.0, 1.0], mesh_parameters2)
 conec = MeshConnectivity(mesh_obj2)
 conec.compute_connectivity()
