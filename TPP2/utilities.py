@@ -171,6 +171,26 @@ class Utilities:
     def plot(mesh,fct,title:str,show_Mesh : bool = True,contour : bool = False):
 
         #Param d'affichage
+        """
+        Affiche le champ T(K) dans le domaine.
+
+        Parameters
+        ----------
+        mesh: Mesh
+            Objet contenant les données du maillage.
+        fct:
+            Fonction analytique du champ T(K) dans le domaine.
+        title: str
+            Titre de la figure.
+        show_Mesh: bool, optional
+            Flag permettant de controler l'affichage du maillage.
+        contour: bool, optional
+            Flag permettant de controler l'affichage des contours du champ T(K).
+
+        Returns
+        -------
+        None
+        """
         colorbar_args = {
             "title": "Champ T(K)",  # Titre de la colorbar
             "vertical": True,  # Colorbar verticale
@@ -198,7 +218,7 @@ class Utilities:
         pv_mesh['Champs T (analytique)'] = fct(cell_centers[:, 0], cell_centers[:, 1])
 
         pl = pvQt.BackgroundPlotter()
-        pl.add_mesh(pv_mesh, scalars='Champs T (analytique)', show_edges=show_Mesh, cmap='hot',scalar_bar_args=colorbar_args)
+        pl.add_mesh(pv_mesh, scalars='Champs T (analytique)', show_edges=show_Mesh, cmap='seismic',scalar_bar_args=colorbar_args)
         if contour:
                 nodes_xcoords = mesh.get_nodes_to_xcoord()
                 nodes_ycoords = mesh.get_nodes_to_ycoord()
@@ -211,9 +231,33 @@ class Utilities:
         pl.show()
 
     @staticmethod
-    def plotError(mesh,fctAnalytique,Values: np.ndarray,title:str,show_Mesh : bool = True):
+    def plotError(mesh,fctAnalytique,Values: np.ndarray,title:str,show_Mesh : bool = True,contour : bool = False):
 
      #Param d'affichage
+        """
+        Affiche le champ T(K) et l'erreur avec la solution analytique.
+
+        Parameters
+        ----------
+        mesh: Mesh
+            Objet contenant les données du maillage.
+        fctAnalytique:
+            Fonction analytique du champ T(K) dans le domaine.
+        Values: np.ndarray
+            Valeurs du champ T(K) sur les centres des éléments.
+        title: str
+            Titre de la figure.
+        show_Mesh: bool, optional
+            Flag permettant de controler l'affichage du maillage.
+        contour: bool, optional
+            Flag permettant de controler l'affichage des contours du champ T(K).
+
+        Returns
+        -------
+        None
+
+        """
+        
         colorbar_args = {
             "title": "Champ T(K)",  # Titre de la colorbar
             "vertical": True,  # Colorbar verticale
@@ -241,7 +285,16 @@ class Utilities:
         pv_mesh['Champs T (analytique)'] = fctAnalytique(cell_centers[:, 0], cell_centers[:, 1]) - Values
 
         pl = pvQt.BackgroundPlotter()
-        pl.add_mesh(pv_mesh, scalars='Champs T (analytique)', show_edges=show_Mesh, cmap='hot',scalar_bar_args=colorbar_args)
+        pl.add_mesh(pv_mesh, scalars='Champs T (analytique)', show_edges=show_Mesh, cmap='seismic',scalar_bar_args=colorbar_args)
+
+
+        if contour:
+                nodes_xcoords = mesh.get_nodes_to_xcoord()
+                nodes_ycoords = mesh.get_nodes_to_ycoord()
+                pv_mesh = pv_mesh.cell_data_to_point_data()
+                contours = pv_mesh.contour(isosurfaces=15,scalars='Champs T (analytique)')
+                pl.add_mesh(contours,color='k',show_scalar_bar=False,line_width=2)
+
         pl.camera_position = 'xy'
         pl.add_text(title, position="upper_edge")
         pl.show()

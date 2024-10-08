@@ -8,6 +8,7 @@ import pyvistaqt as pvQt
 
 from mesh import Mesh
 
+import mesh
 from meshPlotter import MeshPlotter
 
 from utilities import Utilities
@@ -314,7 +315,7 @@ class Solver:
         pv_mesh['Champ T'] = Values  
 
         pl = pvQt.BackgroundPlotter()
-        pl.add_mesh(pv_mesh, scalars='Champ T', show_edges=show_Mesh, cmap='hot',scalar_bar_args=colorbar_args)
+        pl.add_mesh(pv_mesh, scalars='Champ T', show_edges=show_Mesh, cmap='seismic',scalar_bar_args=colorbar_args)
 
         #Ajout des ligne de contour iso
         if contour:
@@ -328,8 +329,6 @@ class Solver:
         pl.camera_position = 'xy'
         pl.add_text(title, position="upper_edge")
         pl.show()
-
-        return Values
 
     def errorQuadratique(self):
         
@@ -350,64 +349,79 @@ class Solver:
     def getMeanElementSize(self):
         return self._MS.calculTailleMoyenne()
 
-    def coupeY(self,Y:float):
+    def coupeY(self,Y:float, plot : bool = True):
         
-        X = []
-        T = []
+        Values = np.zeros(len(self._PolyList))
 
-        for elem in self._PolyList:
+        for i in range(len(self._PolyList)):
+            Values[i] = self._PolyList[i].get_value()
 
-            Nodes = self._mesh.get_element_to_nodes(elem.index)
+        plotter = MeshPlotter()
+        nodes, elements = plotter.prepare_data_for_pyvista(self._mesh)
 
-            diffList = []
-            for node in Nodes:
-                NodeCoord = elem.nodesCoord[node]
-                
-                diffList.append(NodeCoord[1]-Y)
-
-            if min(diffList) <= 0 and max(diffList) > 0:
-
-                X.append(elem.get_Coord()[0])
-                T.append(elem.get_value())
+        pv_mesh = pv.PolyData(nodes, elements)
+        pv_mesh['Champ T'] = Values 
         
-        X = np.array(X)
-        T = np.array(T)
+        A = [pv_mesh.bounds[0],Y,0]
+        B = [pv_mesh.bounds[1],Y,0]
 
-        indice_tri = np.argsort(X)
+        line_sample = pv_mesh.sample_over_line(A,B,resolution=100)
 
-        X = X[indice_tri]
-        T = T[indice_tri]
+        values = line_sample['Champ T']
+        points = line_sample.points
+
+        distance = points[:,0]
+
+        if plot:
+            plt.plot(distance,values)
+            plt.title("T(X) (coupe en Y = {})".format(Y))
+            plt.grid()
+            plt.xlim(pv_mesh.bounds[0],pv_mesh.bounds[1])
+            plt.show()
+
+        return distance,values
+
+        
     
-        return X,T
-    
-    def coupeX(self,X:float):
-        Y=[]
-        T=[]
+    def coupeX(self,X:float, plot : bool = True):
+        Values = np.zeros(len(self._PolyList))
 
-        for elem in self._PolyList:
+        for i in range(len(self._PolyList)):
+            Values[i] = self._PolyList[i].get_value()
 
-            Nodes = self._mesh.get_element_to_nodes(elem.index)
+        plotter = MeshPlotter()
+        nodes, elements = plotter.prepare_data_for_pyvista(self._mesh)
 
-            diffList = []
-            for node in Nodes:
-                NodeCoord = elem.nodesCoord[node]
-                
-                diffList.append(NodeCoord[0]-X)
+        pv_mesh = pv.PolyData(nodes, elements)
+        pv_mesh['Champ T'] = Values 
 
-            if min(diffList) <= 0 and max(diffList) > 0:
+        A = [X,pv_mesh.bounds[2],0]
+        B = [X,pv_mesh.bounds[3],0]
 
-                Y.append(elem.get_Coord()[1])
-                T.append(elem.get_value())
+        line_sample = pv_mesh.sample_over_line(A,B,resolution=100)
         
-        Y = np.array(Y)
-        T = np.array(T)
+        values = line_sample['Champ T']
+        points = line_sample.points
 
-        indice_tri = np.argsort(Y)
+        distance = points[:,1]
 
-        Y = Y[indice_tri]
-        T = T[indice_tri]
+        if plot:
+            plt.plot(distance,values)
+            plt.title("T(Y) (coupe en X = {})".format(X))
+            plt.grid()
+            plt.xlim(pv_mesh.bounds[0],pv_mesh.bounds[1])
+            plt.show()
 
-        return Y,T
+        return distance,values
+
+    def getFieldValues(self):
+
+        Values = np.zeros(len(self._PolyList))
+        for i in range(len(self._PolyList)):
+            Values[i] = self._PolyList[i].get_value()
+
+        return Values
+
 
     @staticmethod
     def convert_to_csr(A : np.ndarray):
