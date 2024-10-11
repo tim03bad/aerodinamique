@@ -187,8 +187,8 @@ if int(choix) in [1, 2, 3]:
             
             solver_fin.solve(4)
             solver_grossier.solve(4)
-            Value_fin = solver_fin.plot("T fin {} \n Peclet = {}, Schema = {}".format(cond, Pe, schema))
-            Value_grossier = solver_grossier.plot("T grossier {} \n Peclet = {}, Schema = {}".format(cond, Pe, schema))
+            Value_fin = solver_fin.plot("T fin {} \n Peclet = {}, Schema = {}".format(cond, Pe, schema),True,True)
+            Value_grossier = solver_grossier.plot("T grossier {} \n Peclet = {}, Schema = {}".format(cond, Pe, schema),True,True)
             
             choix = input("Choisissez la coupe parmi X(1) ou Y(2) : ")
             coupes = ['X', 'Y']
